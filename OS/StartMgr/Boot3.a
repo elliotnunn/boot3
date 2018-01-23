@@ -2212,7 +2212,7 @@ IncreaseEventQueueSize Progress
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
 LoadStartupDispatch Progress
-			move.w	#$AF5F,d0
+			move.w	#-20641,d0				; implements AA7D (StartupDispatch) trap
 			bsr		LoadLowerCaseptch
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
@@ -2740,7 +2740,7 @@ LOOP_SNOOP Progress
 
 			subq.l	#2, sp
 			moveq.l	#-1, d0
-			dc.w	$AA7D				; Extension Notification Dispatch
+			dc.w	$AA7D				; StartupDispatch
 			move	(sp)+, d0
 			bz.s	@success
 
@@ -2751,7 +2751,7 @@ LOOP_SNOOP Progress
 			subq.l	#2, sp
 			clr.l	-(sp)
 			moveq.l	#-6, d0
-			dc.w	$AA7D				; Extension Notification Dispatch
+			dc.w	$AA7D				; StartupDispatch
 			move	(sp)+, d0
 
 			btst	#extensionsEnabledBit, ExtensionsEnabledByte
@@ -2809,7 +2809,7 @@ LOOP_SNOOP Progress
 			subq.l	#2, sp
 			clr.l	-(sp)
 			moveq	#-5, d0
-			dc.w	$AA7D				; Extension Notification Dispatch
+			dc.w	$AA7D				; StartupDispatch
 			move	(sp)+, d0
 
 			move.l	ExpandMem, a0
@@ -3688,7 +3688,7 @@ GetInfoForNextFile			; Somehow involve the Extension Table Mechanism
 			subq.l	#2, sp
 			move.l	a0, -(sp)
 			moveq	#-2, d0
-			dc.w	$AA7D					; extension loader dispatch
+			dc.w	$AA7D					; StartupDispatch
 			move	(sp)+, d0
 			bnz.s	@skipNextCall
 
@@ -3696,7 +3696,7 @@ GetInfoForNextFile			; Somehow involve the Extension Table Mechanism
 			subq.l	#2, sp
 			clr.l	-(sp)
 			moveq	#-4, d0
-			dc.w	$AA7D					; extension loader dispatch
+			dc.w	$AA7D					; StartupDispatch
 			addq.l	#2, sp
 			move	(sp)+, d0
 @skipNextCall
@@ -3723,7 +3723,7 @@ NextFileInFolder			; Invoke the Extension Table Reorder Mechanism
 			subq.l	#2, sp
 			clr.l	-(sp)
 			moveq	#-3, d0
-			dc.w	$AA7D					; extension loader dispatch
+			dc.w	$AA7D					; StartupDispatch
 			addq.l	#2, sp
 			movem.l	(sp)+, d0-d2/a0-a1
 			bra		_NextFileInFolder
@@ -3738,7 +3738,7 @@ ThisFileAgain
 			subq.l	#2, sp
 			clr.l	-(sp)
 			moveq	#-3, d0
-			dc.w	$AA7D					; extension loader dispatch
+			dc.w	$AA7D					; StartupDispatch
 			addq.l	#2, sp
 			movem.l	(sp)+, d0-d2/a0-a1
 			bra		ReiterateWithoutIncrementing
