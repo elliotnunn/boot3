@@ -788,7 +788,7 @@ PrepareGibblyResourceMap
 			move.l	d0, mNext(a0)
 
 
-			jsr		Unexplored_2568
+			jsr		PatchRsrcZoneInit
 @noEnablerFile
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
@@ -1415,7 +1415,7 @@ LoadTimeManagerLib
 
 JustBeforeLoadingVM
 
-			bsr		Unexplored_25B4
+			bsr		PatchSetApplBase
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2116,9 +2116,11 @@ MakeGibblyResident Progress
 			cmp		SysMap, d0
 			beq.s	@nope
 
-			lea		Unexplored_2562, a0
+			;	De-fang
+			lea		NewRsrcZoneInit_InstalledAt, a0
 			move.l	(a0), a0
-			clr.b	$44(a0)
+			clr.b	NewRsrcZoneInit_Flag-NewRsrcZoneInit(a0)
+
 			move.l	TopMapHndl, -(sp)
 			move.l	SysMapHndl, -(sp)
 			_InsertOverrideMap
@@ -4834,104 +4836,114 @@ MyKeyMap2
 	;	There is only about 1k of slack in this file, unless you turn some branches into longs.
 	;	Don't rearrange the monolith that follows. Its internal refs are inflexible.
 
-	dc.w	$48e7	; 251c
-	dc.w	$8080	; 251e
-	dc.w	$103a	; 2520
-	dc.w	$003e	; 2522
-	dc.w	$660a	; 2524
-	dc.w	$4cdf	; 2526
-	dc.w	$0101	; 2528
-	dc.w	$2f3a	; 252a
-	dc.w	$002c	; 252c
-	dc.w	$4e75	; 252e
-	dc.w	$2f38	; 2530
-	dc.w	$0a54	; 2532
-	dc.w	$3f38	; 2534
-	dc.w	$0a58	; 2536
-	dc.w	$21fa	; 2538
-	dc.w	$0022	; 253a
-	dc.w	$0a54	; 253c
-	dc.w	$31f8	; 253e
-	dc.w	$0a5a	; 2540
-	dc.w	$0a58	; 2542
-	dc.w	$207a	; 2544
-	dc.w	$0012	; 2546
-	dc.w	$4e90	; 2548
-	dc.w	$31df	; 254a
-	dc.w	$0a58	; 254c
-	dc.w	$21df	; 254e
-	dc.w	$0a54	; 2550
-	dc.w	$4cdf	; 2552
-	dc.w	$0101	; 2554
-	dc.w	$4e75	; 2556
-	dc.w	$0000	; 2558
-	dc.w	$0000	; 255a
-	dc.w	$0000	; 255c
-	dc.w	$0000	; 255e
-	dc.w	$0101	; 2560
-Unexplored_2562
-	dc.w	$50ff	; 2562
-	dc.w	$8001	; 2564
-	dc.w	$0000	; 2566
-Unexplored_2568
-	dc.w	$48e7	; 2568
-	dc.w	$80c0	; 256a
-	dc.w	$704a	; 256c
-	dc.w	$a71e	; 256e
-	dc.w	$2248	; 2570
-	dc.w	$41fa	; 2572
-	dc.w	$ffa8	; 2574
-	dc.w	$704a	; 2576
-	dc.w	$a02e	; 2578
-	dc.w	$2078	; 257a
-	dc.w	$0a50	; 257c
-	dc.w	$2348	; 257e
-	dc.w	$0040	; 2580
-	dc.w	$2050	; 2582
-	dc.w	$0228	; 2584
-	dc.w	$0001	; 2586
-	dc.w	$0017	; 2588
-	dc.w	$303c	; 258a
-	dc.w	$a996	; 258c
-	dc.w	$a146	; 258e
-	dc.w	$2348	; 2590
-	dc.w	$003c	; 2592
-	dc.w	$303c	; 2594
-	dc.w	$a996	; 2596
-	dc.w	$2049	; 2598
-	dc.w	$a047	; 259a
-	dc.w	$41fa	; 259c
-	dc.w	$ffc4	; 259e
-	dc.w	$2089	; 25a0
-	dc.w	$4cdf	; 25a2
-	dc.w	$0301	; 25a4
-	dc.w	$4e75	; 25a6
-	dc.w	$a02c	; 25a8
-	dc.w	$4eb9	; 25aa
-	dc.w	$50ff	; 25ac
-	dc.w	$8001	; 25ae
-	dc.w	$a02c	; 25b0
-	dc.w	$4e75	; 25b2
-Unexplored_25b4
-	dc.w	$303c	; 25b4
-	dc.w	$a057	; 25b6
-	dc.w	$a346	; 25b8
-	dc.w	$43fa	; 25ba
-	dc.w	$ffee	; 25bc
-	dc.w	$2348	; 25be
-	dc.w	$0002	; 25c0
-	dc.w	$700c	; 25c2
-	dc.w	$a71e	; 25c4
-	dc.w	$2248	; 25c6
-	dc.w	$41fa	; 25c8
-	dc.w	$ffde	; 25ca
-	dc.w	$700c	; 25cc
-	dc.w	$a02e	; 25ce
-	dc.w	$2049	; 25d0
-	dc.w	$303c	; 25d2
-	dc.w	$a057	; 25d4
-	dc.w	$a247	; 25d6
-	dc.w	$4e75	; 25d8
+
+
+;	A new trap we will install to replace _RsrcZoneInit
+
+NewRsrcZoneInit
+
+				movem.l	d0/a0,-(sp)
+				move.b	NewRsrcZoneInit_Flag,d0
+				bne.s	@flag_is_set
+
+;flag not set: nop this trap
+				movem.l	(sp)+,d0/a0
+				move.l	NewRsrcZoneInit_TailCallAddress,-(sp)
+				rts
+
+@flag_is_set; set/restore 
+				move.l	SysMapHndl,-(sp)						; save
+				move.w	SysMap,-(sp)
+
+				move.l	NewRsrcZoneInit_TopMapHndl,SysMapHndl	; set
+				move.w	CurMap,SysMap
+
+				move.l	NewRsrcZoneInit_TailCallAddress,a0		; call
+				jsr		(a0)
+
+				move.w	(sp)+,SysMap							; restore
+				move.l	(sp)+,SysMapHndl
+
+				movem.l	(sp)+,d0/a0
+				rts
+
+NewRsrcZoneInit_TailCallAddress		dc.l	0
+NewRsrcZoneInit_TopMapHndl			dc.l	0
+NewRsrcZoneInit_Flag				dc.b	1, 1		; not sure why there are two
+NewRsrcZoneInit_InstalledAt			dc.l	$50FF8001	; so we can modify the flag after installing
+
+NewRsrcZoneInit_End
+
+				dc.w	0
+
+PatchRsrcZoneInit
+				movem.l	d0/a0-a1,-(sp)
+
+				moveq	#NewRsrcZoneInit_End-NewRsrcZoneInit,d0
+				_NewPtrSysClear
+				move.l	a0,a1
+
+				lea		NewRsrcZoneInit,a0
+				moveq	#NewRsrcZoneInit_End-NewRsrcZoneInit,d0
+				_BlockMove
+
+				move.l	TopMapHndl,a0
+				move.l	a0,NewRsrcZoneInit_TopMapHndl-NewRsrcZoneInit(a1)
+
+				move.l	(a0),a0
+				andi.b	#1,mInMemoryAttr(a0)
+
+				move.w	#$A996,d0
+				_GetTrapAddress
+				move.l	a0,NewRsrcZoneInit_TailCallAddress-NewRsrcZoneInit(a1)
+
+				move.w	#$A996,d0
+				move.l	a1,a0
+				_SetTrapAddress
+
+				lea		NewRsrcZoneInit_InstalledAt,a0
+				move.l	a1,(a0)
+
+				movem.l	(sp)+,d0/a0-a1
+				rts
+
+
+
+;	Patch _SetApplBase
+
+NewSetApplBase
+
+				_InitApplZone
+NewSetApplBase_TheJsr
+				jsr		$50FF8001			; will get patched to point to original
+				_InitApplZone
+				rts
+NewSetApplBase_End
+
+
+PatchSetApplBase
+
+				move.w	#$A057,d0
+				_GetOSTrapAddress
+				lea		NewSetApplBase_TheJsr,a1
+				move.l	a0,2(a1)
+
+				moveq	#NewSetApplBase_End-NewSetApplBase,d0
+				_NewPtrSysClear
+
+				move.l	a0,a1
+				lea		NewSetApplBase,a0
+				moveq	#NewSetApplBase_End-NewSetApplBase,d0
+				_BlockMove
+
+				move.l	a1,a0
+				move.w	#$A057,d0
+				_SetOSTrapAddress
+
+				rts
+
+
+
 Unexplored_25da
 	dc.w	$48e7	; 25da
 	dc.w	$fef8	; 25dc
