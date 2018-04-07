@@ -923,6 +923,7 @@ ABC3 NQDMisc
 ABC9 IconDispatch
 ABCA DeviceLoop
 ABE0 QDExtensions2
+ABE9 NameRegistryDispatch
 ABEB DisplayDispatch
 ABED DragDispatch
 ABF1 GestaltValueDispatch

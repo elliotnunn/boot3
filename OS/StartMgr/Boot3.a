@@ -607,13 +607,13 @@ BootCode	MAIN
 
 	IMPORT	DoSomethingSpecialOnPBG3Series
 	IMPORT	DoSomethingWithTextEdit	; 2c24
-	IMPORT	sub_600035be
-	IMPORT	sub_60003708
-	IMPORT	sub_60003892
-	IMPORT	sub_60003938
+	IMPORT	FiddleWithBacklight
+	IMPORT	_MessWithSomeTraps
+	IMPORT	LoopSnoopInit
+	IMPORT	PatchCompMgrForProgressBar
 	IMPORT	NudgeProgressBar		; 3988
-	IMPORT	sub_600052c6
-	IMPORT	sub_600052ea
+	IMPORT	_SetUpStartupScreen
+	IMPORT	GetStartupPict
 	IMPORT	BootAlert				; 539a
 	IMPORT	VMName					; 54b6
 	IMPORT	UserModeInitName		; 54c6
@@ -622,19 +622,19 @@ BootCode	MAIN
 	IMPORT	SystemName				; 54f8
 	IMPORT	LinkedPatchName			; 54fa
 	IMPORT	InitGreeterWindow
-	IMPORT	sub_6000566e
+	IMPORT	PrepForResolutionChangeByThing
 	IMPORT	sub_60005682
 	IMPORT	HeavyAlert
 	IMPORT	sub_60005e0a
-	IMPORT	sub_60005f4c
-	IMPORT	sub_60005ff8
-	IMPORT	sub_600060a2
-	IMPORT	sub_600060e4
-	IMPORT	sub_6000619a
-	IMPORT	sub_600061e6
-	IMPORT	sub_60006232
-	IMPORT	sub_60006296
-	IMPORT	sub_6000632a
+	IMPORT	_LoadNativeDriversFromExtensionFolder
+	IMPORT	PCCardDiskBasedCheckUp
+	IMPORT	_FireWirePerformLateInits
+	IMPORT	_USBDiskCheck
+	IMPORT	_InstallITT
+	IMPORT	_DoSCSILateLoad
+	IMPORT	_MakeObjectSupportLibResidentHack
+	IMPORT	_GoInstallSerialDMA
+	IMPORT	_FinishInitDisplayManager
 	IMPORT	sub_600063c6
 	IMPORT	sub_6000643e
 	IMPORT	sub_600065b4
@@ -643,40 +643,40 @@ BootCode	MAIN
 	IMPORT	sub_60006798
 	IMPORT	sub_600067b0
 	IMPORT	sub_600068bc
-	IMPORT	sub_600069d2
-	IMPORT	sub_600070ee
-	IMPORT	sub_6000718a
-	IMPORT	sub_600071ea
+	IMPORT	PatchADBReInit
+	IMPORT	_IncreaseEventQueueSize
+	IMPORT	EnforceCDOnlyBoot
+	IMPORT	AdjustRAMForCDBoot
 	IMPORT	sub_6000725a
 	IMPORT	sub_60007634
 	IMPORT	sub_6000780a
-	IMPORT	sub_6000790c
-	IMPORT	sub_60007910
-	IMPORT	sub_60007914
-	IMPORT	sub_60007bda
+	IMPORT	j_SetColorCodeGestalt
+	IMPORT	j_EmulatorIsOnDisk
+	IMPORT	j__LoadMultitaskingNanoKernel
+	IMPORT	j_DisableEDiskIfNotEnoughRAM
 	IMPORT	sub_60007bde
 	IMPORT	sub_60007d2c
-	IMPORT	sub_60007f64
-	IMPORT	sub_60007f68
-	IMPORT	sub_60007f6c
-	IMPORT	sub_60007f70
-	IMPORT	sub_600083e8
+	IMPORT	j__LoadGoNative
+	IMPORT	j_SetSplitOSGestalt
+	IMPORT	j_SpecialCaseOriginaliMac
+	IMPORT	_InitLotsOfNativeManagers
+	IMPORT	_LoadTimeManagerLib
 	IMPORT	FinalProcessMgrLaunch
 	IMPORT	sub_60008a2e
 	IMPORT	sub_60008a9a
-	IMPORT	sub_60008af4
-	IMPORT	sub_60008c08
+	IMPORT	_RemoveAlisToUninitializedPAPA
+	IMPORT	_InstallOFDiskNameMaker
 	IMPORT	sub_60008d62
 	IMPORT	sub_60008ff4
 	IMPORT	sub_60009278
-	IMPORT	sub_6000935e
+	IMPORT	_ReplaceBridgeVideoDriver
 	IMPORT	sub_600095a6
 	IMPORT	sub_600095d4
-	IMPORT	sub_6000970e
+	IMPORT	GetSysVersion
 	IMPORT	sub_60009790
 	IMPORT	sub_6000b5b2
 	IMPORT	sub_6000b80c
-	IMPORT	sub_6000c5ea
+	IMPORT	SetUserVisibleMachineName
 	IMPORT	sub_6000cc4e
 	IMPORT	sub_60009CA6
 	IMPORT	SUB_600073B4
@@ -1150,7 +1150,7 @@ PatchBalloonHelp
 
 SetUpStartupScreen
 
-			bsr		sub_600052C6
+			bsr		_SetUpStartupScreen
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -1166,29 +1166,31 @@ CheckTooOld
 
 LoadMultitaskingNanoKernel
 
-			jsr		sub_60007914
+			jsr		j__LoadMultitaskingNanoKernel
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
-PatchSomethingPrettyLowLevel
+PatchEmulator
 
 			; First patch touches "Emulator Update Extension" Gestalt selector ('emuv')
 
 			move.l	#gestaltMacOSCompatibilityBoxAttr, d0
 			_Gestalt
-			beq.s	@no ; bbox present
+			beq.s	@emuInBboxThereforeUpToDate
 
 			clr.b	-(sp)
-			jsr		sub_60007910
+			jsr		j_EmulatorIsOnDisk
 			tst.b	(sp)+
-			bne.s	@no
+			bne.s	@emuOnDiskThereforeUpToDate
 
 			move	#156, d0
 			bsr		LoadLowerCaseptch
 
 			move	#911, d0
 			bsr		LoadLowerCaseptch
-@no
+
+@emuOnDiskThereforeUpToDate
+@emuInBboxThereforeUpToDate
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -1197,7 +1199,7 @@ InitLotsOfNativeManagers
 			move	CurMap, -(sp)
 
 			clr		-(sp)
-			jsr		sub_60007F70
+			jsr		_InitLotsOfNativeManagers
 			move	(sp)+, d1
 			bz.s	@noErr
 
@@ -1220,11 +1222,11 @@ InstallNameRegistryTrap
 
 DoSomethingWithSystemVersion
 
-			jsr		sub_6000790C
+			jsr		j_SetColorCodeGestalt
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
-ReplaceVideoDriver
+ReplaceBridgeVideoDriver
 
 			move.l	#gestaltMacOSCompatibilityBoxAttr, d0
 			_Gestalt
@@ -1238,7 +1240,7 @@ ReplaceVideoDriver
 			dbne	d0, @keycheck
 			beq.s	@no
 
-			bsr.l	sub_6000935E
+			bsr.l	_ReplaceBridgeVideoDriver
 @no
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
@@ -1247,7 +1249,7 @@ ShowStartupScreen
 
 ; First, open the resource fork of the startup screen file to look for a 'PICT' (0) resource.
 
-			bsr		sub_600052EA ; GetStartupPict
+			bsr		GetStartupPict
 
 ; Now, do the welcome screen.
 
@@ -1339,7 +1341,7 @@ MakeEDiskPagesWriteThrough
 
 MessWithSomeTraps
 
-			jsr		sub_60003708
+			jsr		_MessWithSomeTraps
 
 ;ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -1406,15 +1408,15 @@ RememberPhysicalMemTop
 			move	(sp)+, d0
 			bz.s	@noXBOO
 
-			bsr.l	sub_6000718A
-			bsr.l	sub_600071EA
+			bsr.l	EnforceCDOnlyBoot
+			bsr.l	AdjustRAMForCDBoot
 @noXBOO
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
 LoadTimeManagerLib
 
-			bsr.l	sub_600083E8
+			bsr.l	_LoadTimeManagerLib
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -1559,7 +1561,7 @@ LoadVMAndDebugger
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
-			jsr		sub_60007BDA
+			jsr		j_DisableEDiskIfNotEnoughRAM
 			jsr		sub_60005E0A
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
@@ -1930,7 +1932,7 @@ SetSysVersion
 			movem.l	d2/a1-a3, -(sp)
 
 			subq	#4, sp
-			bsr.l	sub_6000970E
+			bsr.l	GetSysVersion
 			move.l	(sp)+, d1
 			bnz.s	@success
 
@@ -2086,7 +2088,7 @@ LoadLinkedPatches
 			move.l	ExpandMem, a0
 			tst.b	$33B(a0)
 			bnz		@dontJump
-			jsr		sub_60005FF8
+			jsr		PCCardDiskBasedCheckUp
 @dontJump
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
@@ -2109,11 +2111,11 @@ LoadLinkedPatches
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
 			bsr		_CheckForMinSysEarly
-			jsr		sub_600069D2
-			bsr.l	sub_6000C5EA
-			jsr		sub_60007F6C
-			jsr		sub_60007F68
-			bsr		sub_600035BE
+			jsr		PatchADBReInit
+			bsr.l	SetUserVisibleMachineName
+			jsr		j_SpecialCaseOriginaliMac
+			jsr		j_SetSplitOSGestalt
+			bsr		FiddleWithBacklight
 			bsr		InitGreeterWindow
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
@@ -2175,7 +2177,7 @@ LoadGoNative Progress
 
 			beq.s	@noLoad
 			clr		-(SP)
-			jsr		sub_60007F64 ; RealLoadGoNative
+			jsr		j__LoadGoNative
 			add		#2, SP
 @noLoad
 
@@ -2219,7 +2221,7 @@ TestForNeedToReset Progress
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
 IncreaseEventQueueSize Progress
-			jsr		sub_600070EE
+			jsr		_IncreaseEventQueueSize
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2284,7 +2286,7 @@ InstallITT Progress
 			_MemoryDispatch
 @noDoThing
 
-			bsr		sub_6000619A
+			bsr		_InstallITT
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2535,13 +2537,13 @@ GoInstallSerialDMA Progress
 			move.l	#$8000,d5
 			bsr		MakeSysFree
 
-			bsr		sub_60006296
+			bsr		_GoInstallSerialDMA
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
 InstallOFDiskNameMaker Progress
 
-			jsr		sub_60008C08
+			jsr		_InstallOFDiskNameMaker
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2592,7 +2594,7 @@ LoadNativeDriversFromExtensionFolder Progress
 
 			subq	#2,sp
 			clr		-(sp)
-			jsr		sub_60005F4C
+			jsr		_LoadNativeDriversFromExtensionFolder
 			addq	#2,sp
 
 begoneNativeDrivers
@@ -2617,7 +2619,7 @@ RestorePropertiesFromPreferenceFile Progress
 
 USBDiskCheck Progress
 
-			jsr		sub_600060E4
+			jsr		_USBDiskCheck
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2626,7 +2628,7 @@ USBDiskCheck Progress
 			bnz		no_fw
 
 FireWirePerformLateInits Progress
-			jsr		sub_600060A2
+			jsr		_FireWirePerformLateInits
 
 no_fw
 
@@ -2634,7 +2636,7 @@ no_fw
 
 FinishInitDisplayManager Progress
 
-			bsr		sub_6000632A
+			bsr		_FinishInitDisplayManager
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2724,7 +2726,7 @@ LoadSystemComponents Progress
 			bnz.s	no_scsi
 
 DoSCSILateLoad Progress
-			bsr		sub_600061E6
+			bsr		_DoSCSILateLoad
 
 no_scsi
 
@@ -2746,7 +2748,7 @@ LOOP_SNOOP Progress
 
 			bsr		DoSomethingSpecialOnPBG3Series
 
-			bsr		sub_60003892
+			bsr		LoopSnoopInit
 
 			clr.b	$2C(a5)
 
@@ -2869,7 +2871,7 @@ SkipAllExtensionLoads
 
 RemoveAlisToUninitializedPAPA Progress
 
-			bsr.l	sub_60008AF4
+			bsr.l	_RemoveAlisToUninitializedPAPA
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2904,7 +2906,7 @@ begonePMSecondaryInit
 
 MakeObjectSupportLibResidentHack Progress
 
-			bsr		sub_60006232
+			bsr		_MakeObjectSupportLibResidentHack
 
 ; ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
 
@@ -2915,9 +2917,9 @@ PatchComponentManager Progress
 			move	#-16500, d6
 			bsr.l	ExecuteFromSystem
 
-			bsr		sub_60003938
+			bsr		PatchCompMgrForProgressBar
 
-			bsr		sub_6000566E
+			bsr		PrepForResolutionChangeByThing
 
 			btst.b	#4, SwitchedFlags
 			bz.s	@nah
@@ -5728,13 +5730,13 @@ GetEndOfBootCode
 
 	EXPORT	DoSomethingSpecialOnPBG3Series
 	EXPORT	DoSomethingWithTextEdit	; 2c24
-	EXPORT	sub_600035be
-	EXPORT	sub_60003708
-	EXPORT	sub_60003892
-	EXPORT	sub_60003938
+	EXPORT	FiddleWithBacklight
+	EXPORT	_MessWithSomeTraps
+	EXPORT	LoopSnoopInit
+	EXPORT	PatchCompMgrForProgressBar
 	EXPORT	NudgeProgressBar		; 3988
-	EXPORT	sub_600052c6
-	EXPORT	sub_600052ea
+	EXPORT	_SetUpStartupScreen
+	EXPORT	GetStartupPict
 	EXPORT	BootAlert				; 539a
 	EXPORT	VMName					; 54b6
 	EXPORT	UserModeInitName		; 54c6
@@ -5743,19 +5745,19 @@ GetEndOfBootCode
 	EXPORT	SystemName				; 54f8
 	EXPORT	LinkedPatchName			; 54fa
 	EXPORT	InitGreeterWindow
-	EXPORT	sub_6000566e
+	EXPORT	PrepForResolutionChangeByThing
 	EXPORT	sub_60005682
 	EXPORT	HeavyAlert
 	EXPORT	sub_60005e0a
-	EXPORT	sub_60005f4c
-	EXPORT	sub_60005ff8
-	EXPORT	sub_600060a2
-	EXPORT	sub_600060e4
-	EXPORT	sub_6000619a
-	EXPORT	sub_600061e6
-	EXPORT	sub_60006232
-	EXPORT	sub_60006296
-	EXPORT	sub_6000632a
+	EXPORT	_LoadNativeDriversFromExtensionFolder
+	EXPORT	PCCardDiskBasedCheckUp
+	EXPORT	_FireWirePerformLateInits
+	EXPORT	_USBDiskCheck
+	EXPORT	_InstallITT
+	EXPORT	_DoSCSILateLoad
+	EXPORT	_MakeObjectSupportLibResidentHack
+	EXPORT	_GoInstallSerialDMA
+	EXPORT	_FinishInitDisplayManager
 	EXPORT	sub_600063c6
 	EXPORT	sub_6000643e
 	EXPORT	sub_600065b4
@@ -5764,40 +5766,40 @@ GetEndOfBootCode
 	EXPORT	sub_60006798
 	EXPORT	sub_600067b0
 	EXPORT	sub_600068bc
-	EXPORT	sub_600069d2
-	EXPORT	sub_600070ee
-	EXPORT	sub_6000718a
-	EXPORT	sub_600071ea
+	EXPORT	PatchADBReInit
+	EXPORT	_IncreaseEventQueueSize
+	EXPORT	EnforceCDOnlyBoot
+	EXPORT	AdjustRAMForCDBoot
 	EXPORT	sub_6000725a
 	EXPORT	sub_60007634
 	EXPORT	sub_6000780a
-	EXPORT	sub_6000790c
-	EXPORT	sub_60007910
-	EXPORT	sub_60007914
-	EXPORT	sub_60007bda
+	EXPORT	j_SetColorCodeGestalt
+	EXPORT	j_EmulatorIsOnDisk
+	EXPORT	j__LoadMultitaskingNanoKernel
+	EXPORT	j_DisableEDiskIfNotEnoughRAM
 	EXPORT	sub_60007bde
 	EXPORT	sub_60007d2c
-	EXPORT	sub_60007f64
-	EXPORT	sub_60007f68
-	EXPORT	sub_60007f6c
-	EXPORT	sub_60007f70
-	EXPORT	sub_600083e8
+	EXPORT	j__LoadGoNative
+	EXPORT	j_SetSplitOSGestalt
+	EXPORT	j_SpecialCaseOriginaliMac
+	EXPORT	_InitLotsOfNativeManagers
+	EXPORT	_LoadTimeManagerLib
 	EXPORT	FinalProcessMgrLaunch
 	EXPORT	sub_60008a2e
 	EXPORT	sub_60008a9a
-	EXPORT	sub_60008af4
-	EXPORT	sub_60008c08
+	EXPORT	_RemoveAlisToUninitializedPAPA
+	EXPORT	_InstallOFDiskNameMaker
 	EXPORT	sub_60008d62
 	EXPORT	sub_60008ff4
 	EXPORT	sub_60009278
-	EXPORT	sub_6000935e
+	EXPORT	_ReplaceBridgeVideoDriver
 	EXPORT	sub_600095a6
 	EXPORT	sub_600095d4
-	EXPORT	sub_6000970e
+	EXPORT	GetSysVersion
 	EXPORT	sub_60009790
 	EXPORT	sub_6000b5b2
 	EXPORT	sub_6000b80c
-	EXPORT	sub_6000c5ea
+	EXPORT	SetUserVisibleMachineName
 	EXPORT	sub_6000cc4e
 	EXPORT	sub_60009CA6
 	EXPORT	SUB_600073B4
@@ -6530,7 +6532,7 @@ loc_60003112:                           ; CODE XREF: sub_60003106+8â†‘j
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60003114:                           ; CODE XREF: sub_600035BE+1Aâ†“p
+sub_60003114:                           ; CODE XREF: FiddleWithBacklight+1Aâ†“p
 
 arg_C           set  $10
 arg_12          set  $16
@@ -6651,8 +6653,8 @@ loc_60003192:                           ; CODE XREF: sub_60003162+1Eâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_600031A2:                           ; CODE XREF: sub_60007A14+184â†“p
-				                        ; sub_60007A14+1B0â†“p
+sub_600031A2:                           ; CODE XREF: PlayWithNewNanoKernel+184â†“p
+				                        ; PlayWithNewNanoKernel+1B0â†“p
 
 arg_0           set  8
 arg_2           set  $A
@@ -6672,7 +6674,7 @@ arg_2           set  $A
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_600031BC:                           ; CODE XREF: sub_60007A14+144â†“p
+sub_600031BC:                           ; CODE XREF: PlayWithNewNanoKernel+144â†“p
 				sf      d1
 				bra.s   loc_600031C2
 ; End of function sub_600031BC
@@ -6681,7 +6683,7 @@ sub_600031BC:                           ; CODE XREF: sub_60007A14+144â†“p
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_600031C0:                           ; CODE XREF: sub_60007A14+168â†“p
+sub_600031C0:                           ; CODE XREF: PlayWithNewNanoKernel+168â†“p
 				st      d1
 
 loc_600031C2:                           ; CODE XREF: sub_600031BC+2â†‘j
@@ -6717,7 +6719,7 @@ loc_600031EE:                           ; CODE XREF: sub_600031C0+2Aâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_60003204:                           ; CODE XREF: sub_60007A14+F8â†“p
+sub_60003204:                           ; CODE XREF: PlayWithNewNanoKernel+F8â†“p
 
 arg_0           set  8
 arg_4           set  $C
@@ -6740,8 +6742,8 @@ arg_6           set  $E
 
 ; Attributes: bp-based frame
 
-sub_60003224:                           ; CODE XREF: sub_60007A14+88â†“p
-				                        ; sub_60007A14+10Eâ†“p
+sub_60003224:                           ; CODE XREF: PlayWithNewNanoKernel+88â†“p
+				                        ; PlayWithNewNanoKernel+10Eâ†“p
 
 arg_0           set  8
 arg_4           set  $C
@@ -7233,7 +7235,7 @@ arg_0           set  8
 
 ; Attributes: bp-based frame
 
-sub_60003476:                           ; CODE XREF: sub_600035BE+44â†“p
+sub_60003476:                           ; CODE XREF: FiddleWithBacklight+44â†“p
 
 var_3A          set -$3A
 var_32          set -$32
@@ -7323,7 +7325,7 @@ loc_6000350A:                           ; CODE XREF: sub_600034B4+14â†‘j
 
 ; Attributes: bp-based frame
 
-sub_60003516:                           ; CODE XREF: sub_600035BE+ACâ†“p
+sub_60003516:                           ; CODE XREF: FiddleWithBacklight+ACâ†“p
 
 var_28          set -$28
 var_14          set -$14
@@ -7415,7 +7417,7 @@ loc_600035B2:                           ; CODE XREF: sub_60003516+2Aâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_600035BE:                           ; CODE XREF: ROM:60000A9Eâ†‘p
+FiddleWithBacklight:                    ; CODE XREF: ROM:60000A9Eâ†‘p
 
 var_5A          set -$5A
 var_4E          set -$4E
@@ -7445,7 +7447,7 @@ var_1           set -1
 				jsr     sub_60003114
 				tst.w   (sp)+
 				bne.w   loc_600036F2
-				move.l  #$6D616368,d0
+				move.l  #'mach',d0
 				lea     var_1C(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -7456,7 +7458,7 @@ var_1           set -1
 				bra.w   loc_600036E8
 ; ---------------------------------------------------------------------------
 
-loc_600035FC:                           ; CODE XREF: sub_600035BE+130â†“j
+loc_600035FC:                           ; CODE XREF: FiddleWithBacklight+130â†“j
 				pea     var_18(a6)
 				move.l  a4,-(sp)
 				jsr     sub_60003476
@@ -7479,8 +7481,8 @@ loc_600035FC:                           ; CODE XREF: sub_600035BE+130â†“j
 				cmp.l   d0,d1
 				bne.s   loc_60003658
 
-loc_60003630:                           ; CODE XREF: sub_600035BE+58â†‘j
-				                        ; sub_600035BE+64â†‘j
+loc_60003630:                           ; CODE XREF: FiddleWithBacklight+58â†‘j
+				                        ; FiddleWithBacklight+64â†‘j
 				move.l  #$800,d0
 				and.l   var_14(a6),d0
 				beq.s   loc_60003658
@@ -7493,8 +7495,8 @@ loc_60003630:                           ; CODE XREF: sub_600035BE+58â†‘j
 				move.b  var_15(a6),d0
 				move.w  d0,var_6+2(a6)
 
-loc_60003658:                           ; CODE XREF: sub_600035BE+70â†‘j
-				                        ; sub_600035BE+7Câ†‘j
+loc_60003658:                           ; CODE XREF: FiddleWithBacklight+70â†‘j
+				                        ; FiddleWithBacklight+7Câ†‘j
 				move.l  a3,d0
 				bne.s   loc_60003678
 				pea     var_1(a6)
@@ -7507,15 +7509,15 @@ loc_60003658:                           ; CODE XREF: sub_600035BE+70â†‘j
 				beq.s   loc_60003678
 				movea.l a4,a3
 
-loc_60003678:                           ; CODE XREF: sub_600035BE+4Câ†‘j
-				                        ; sub_600035BE+9Câ†‘j ...
+loc_60003678:                           ; CODE XREF: FiddleWithBacklight+4Câ†‘j
+				                        ; FiddleWithBacklight+9Câ†‘j ...
 				move.l  a3,d0
 				beq.s   loc_600036E0
 				cmpi.l  #$13A,var_1C(a6)
 				bne.s   loc_6000368C
 				move.w  #$FF,var_6+2(a6)
 
-loc_6000368C:                           ; CODE XREF: sub_600035BE+C6â†‘j
+loc_6000368C:                           ; CODE XREF: FiddleWithBacklight+C6â†‘j
 				moveq   #0,d0
 				move.l  d0,var_3C(a6)
 				move.w  var_8(a6),var_36(a6)
@@ -7539,39 +7541,39 @@ loc_6000368C:                           ; CODE XREF: sub_600035BE+C6â†‘j
 				bra.s   loc_600036F2
 ; ---------------------------------------------------------------------------
 
-loc_600036E0:                           ; CODE XREF: sub_600035BE+BCâ†‘j
+loc_600036E0:                           ; CODE XREF: FiddleWithBacklight+BCâ†‘j
 				subq.l  #4,sp
 				move.l  a4,-(sp)
 				dc.w    $AA2B ; _GetNextDevice
 				movea.l (sp)+,a4
 
-loc_600036E8:                           ; CODE XREF: sub_600035BE+3Aâ†‘j
+loc_600036E8:                           ; CODE XREF: FiddleWithBacklight+3Aâ†‘j
 				move.l  a4,d0
 				beq.s   loc_600036F2
 				move.l  a3,d0
 				beq.w   loc_600035FC
 
-loc_600036F2:                           ; CODE XREF: sub_600035BE+20â†‘j
-				                        ; sub_600035BE+FEâ†‘j ...
+loc_600036F2:                           ; CODE XREF: FiddleWithBacklight+20â†‘j
+				                        ; FiddleWithBacklight+FEâ†‘j ...
 				movem.l var_5A(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_600035BE
+; End of function FiddleWithBacklight
 
 ; ---------------------------------------------------------------------------
-aBacklight:     dc.b $A                 ; DATA XREF: sub_600035BE+12â†‘o
+aBacklight:     dc.b $A                 ; DATA XREF: FiddleWithBacklight+12â†‘o
 				dc.b '.Backlight',0
 
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60003708:                           ; CODE XREF: ROM:loc_60000514â†‘p
+_MessWithSomeTraps:                     ; CODE XREF: ROM:loc_60000514â†‘p
 
 ; FUNCTION CHUNK AT 60003770 SIZE 0000003C BYTES
 
 				bsr.w   sub_60003712
 				bra.w   loc_60003770
-; End of function sub_60003708
+; End of function _MessWithSomeTraps
 
 ; ---------------------------------------------------------------------------
 				dc.b $4E ; N
@@ -7580,7 +7582,7 @@ sub_60003708:                           ; CODE XREF: ROM:loc_60000514â†‘p
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60003712:                           ; CODE XREF: sub_60003708â†‘p
+sub_60003712:                           ; CODE XREF: _MessWithSomeTrapsâ†‘p
 				moveq   #0,d1
 				lea     loc_6000376A,a0
 				move.w  (a0),d0
@@ -7624,8 +7626,8 @@ sub_60003766:                           ; DATA XREF: sub_60003712+12â†‘o
 				                        ; sub_60003712+44â†‘o
 				dc.w    $A092 ; _EgretDispatch
 
-loc_60003768:                           ; DATA XREF: sub_60003708:loc_6000378Aâ†“o
-				                        ; sub_60003708+94â†“o
+loc_60003768:                           ; DATA XREF: _MessWithSomeTraps:loc_6000378Aâ†“o
+				                        ; _MessWithSomeTraps+94â†“o
 				dc.w    $AAF3 ; _ExpansionBusDispatch
 
 loc_6000376A:                           ; DATA XREF: sub_60003712+2â†‘o
@@ -7636,19 +7638,19 @@ loc_6000376C:                           ; DATA XREF: sub_60003712+Câ†‘o
 				ori.b   #0,d0
 ; End of function sub_60003766
 
-; START OF FUNCTION CHUNK FOR sub_60003708
+; START OF FUNCTION CHUNK FOR _MessWithSomeTraps
 
-loc_60003770:                           ; CODE XREF: sub_60003708+4â†‘j
+loc_60003770:                           ; CODE XREF: _MessWithSomeTraps+4â†‘j
 				btst    #6,($240B).w
 				bne.s   locret_600037AA
-				move.l  #$62626F78,d0
+				move.l  #'bbox',d0
 				dc.w    $A1AD ; _Gestalt
 				bne.s   loc_6000378A
 				move.l  a0,d0
 				btst    #0,d0
 				bne.s   locret_600037AA
 
-loc_6000378A:                           ; CODE XREF: sub_60003708+78â†‘j
+loc_6000378A:                           ; CODE XREF: _MessWithSomeTraps+78â†‘j
 				lea     loc_60003768,a0
 				move.w  (a0),d0
 				dc.w    $A746 ; _GetToolTrapAddress
@@ -7662,10 +7664,10 @@ loc_6000378A:                           ; CODE XREF: sub_60003708+78â†‘j
 				movea.l (a0),a0
 				dc.w    $A647 ; _SetToolTrapAddress
 
-locret_600037AA:                        ; CODE XREF: sub_60003708+6Eâ†‘j
-				                        ; sub_60003708+80â†‘j ...
+locret_600037AA:                        ; CODE XREF: _MessWithSomeTraps+6Eâ†‘j
+				                        ; _MessWithSomeTraps+80â†‘j ...
 				rts
-; END OF FUNCTION CHUNK FOR sub_60003708
+; END OF FUNCTION CHUNK FOR _MessWithSomeTraps
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -7702,7 +7704,7 @@ loc_600037E2:                           ; CODE XREF: sub_600037AC+32â†‘j
 ; ---------------------------------------------------------------------------
 
 loc_600037F0:                           ; CODE XREF: sub_600037AC+3Aâ†‘p
-				                        ; sub_600055A8:loc_6000562Câ†“p
+				                        ; ResetDMNotifyProc:loc_6000562Câ†“p
 				btst    #2,($B21).w
 				beq.s   loc_60003806
 				move.l  ($3F8).w,$1E(a5)
@@ -7767,18 +7769,18 @@ loc_6000388E:                           ; CODE XREF: ROM:6000386Câ†‘j
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60003892:                           ; CODE XREF: ROM:600015B4â†‘p
+LoopSnoopInit:                          ; CODE XREF: ROM:600015B4â†‘p
 				btst    #1,($B21).w
 				beq.s   loc_6000389C
 				rts
 ; ---------------------------------------------------------------------------
 
-loc_6000389C:                           ; CODE XREF: sub_60003892+6â†‘j
+loc_6000389C:                           ; CODE XREF: LoopSnoopInit+6â†‘j
 				jsr     sub_60004B2E
 				st      -(sp)
 				jsr     sub_60003EA8
 				rts
-; End of function sub_60003892
+; End of function LoopSnoopInit
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -7803,7 +7805,7 @@ arg_0           set  4
 				beq.s   loc_60003906
 				addq.w  #8,d0
 				move.w  d0,$28(a5)
-				lea     unk_60003986,a0
+				lea     word_60003986,a0
 				move.w  $28(a5),(a0)
 				lea     unk_60003914,a0
 				pea     (a0)
@@ -7854,21 +7856,21 @@ sub_60003924:                           ; CODE XREF: sub_60004964+54â†“p
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60003938:                           ; CODE XREF: ROM:600017FEâ†‘p
+PatchCompMgrForProgressBar:             ; CODE XREF: ROM:600017FEâ†‘p
 				btst    #1,($B21).w
 				beq.s   loc_60003942
 				rts
 ; ---------------------------------------------------------------------------
 
-loc_60003942:                           ; CODE XREF: sub_60003938+6â†‘j
+loc_60003942:                           ; CODE XREF: PatchCompMgrForProgressBar+6â†‘j
 				lea     unk_60003AC6,a0
 				st      (a0)
 				movea.l ($2B6).w,a0
 				clr.l   $324(a0)
 				btst    #5,($B20).w
 				beq.s   loc_60003978
-				lea     unk_60003982,a0
-				lea     unk_60003986,a1
+				lea     word_60003982,a0
+				lea     word_60003986,a1
 				move.w  (a1),(a0)
 				move.w  $26(a5),2(a0)
 				addq.w  #2,2(a0)
@@ -7877,19 +7879,16 @@ loc_60003942:                           ; CODE XREF: sub_60003938+6â†‘j
 				sf      -(sp)
 				jsr     sub_60003EA8
 
-loc_60003978:                           ; CODE XREF: sub_60003938+1Eâ†‘j
+loc_60003978:                           ; CODE XREF: PatchCompMgrForProgressBar+1Eâ†‘j
 				move.w  $28(a5),$26(a5)
 				jmp     NudgeProgressBar
-; End of function sub_60003938
-
 ; ---------------------------------------------------------------------------
-unk_60003982:   dc.b   0                ; DATA XREF: sub_60003938+20â†‘o
-				dc.b   0
-				dc.b   0
-				dc.b   0
-unk_60003986:   dc.b   0                ; DATA XREF: sub_600038A8+32â†‘o
-				                        ; sub_60003938+24â†‘o
-				dc.b   0
+word_60003982:  dc.w 0                  ; DATA XREF: PatchCompMgrForProgressBar+20â†‘o
+				dc.w 0
+word_60003986:  dc.w 0                  ; DATA XREF: sub_600038A8+32â†‘o
+				                        ; PatchCompMgrForProgressBar+24â†‘o
+; End of function PatchCompMgrForProgressBar
+
 ; ---------------------------------------------------------------------------
 ; START OF FUNCTION CHUNK FOR sub_600038A8
 
@@ -8012,7 +8011,7 @@ loc_60003A8A:                           ; CODE XREF: sub_600038A8+1DAâ†‘j
 				rts
 ; END OF FUNCTION CHUNK FOR sub_600038A8
 ; ---------------------------------------------------------------------------
-unk_60003AC6:   dc.b   0                ; DATA XREF: sub_60003938:loc_60003942â†‘o
+unk_60003AC6:   dc.b   0                ; DATA XREF: PatchCompMgrForProgressBar:loc_60003942â†‘o
 				                        ; sub_600038A8+1D4â†‘o
 				dc.b   0
 
@@ -8786,7 +8785,7 @@ loc_60003DDE:                           ; CODE XREF: sub_60003DB8+20â†‘j
 
 ; Attributes: bp-based frame
 
-sub_60003DE8:                           ; CODE XREF: sub_60003938+36â†‘p
+sub_60003DE8:                           ; CODE XREF: PatchCompMgrForProgressBar+36â†‘p
 
 var_C           set -$C
 var_4           set -4
@@ -8881,8 +8880,8 @@ off_60003EA2:   dc.l $6000              ; CODE XREF: sub_6000B34E+1Eâ†“p
 
 ; Attributes: bp-based frame
 
-sub_60003EA8:                           ; CODE XREF: sub_60003892+10â†‘p
-				                        ; sub_60003938+3Câ†‘p
+sub_60003EA8:                           ; CODE XREF: LoopSnoopInit+10â†‘p
+				                        ; PatchCompMgrForProgressBar+3Câ†‘p
 
 arg_0           set  8
 
@@ -10306,7 +10305,7 @@ sub_60004B2A:                           ; CODE XREF: sub_6000B3B6+58â†“p
 
 ; Attributes: bp-based frame
 
-sub_60004B2E:                           ; CODE XREF: sub_60003892:loc_6000389Câ†‘p
+sub_60004B2E:                           ; CODE XREF: LoopSnoopInit:loc_6000389Câ†‘p
 
 var_4           set -4
 
@@ -11276,7 +11275,7 @@ arg_4           set  $C
 
 ; Attributes: thunk
 
-sub_60005280:                           ; CODE XREF: sub_6000C686+100â†“p
+sub_60005280:                           ; CODE XREF: SpecialCaseOriginaliMac+100â†“p
 				bra.w   sub_60003394
 ; End of function sub_60005280
 
@@ -11320,7 +11319,7 @@ byte_600052C2:  dc.b 1                  ; DATA XREF: sub_60005284+22â†‘o
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_600052C6:                           ; CODE XREF: ROM:loc_600003D2â†‘p
+_SetUpStartupScreen:                    ; CODE XREF: ROM:loc_600003D2â†‘p
 				movea.l ($A50).w,a0
 				movea.l (a0),a0
 				move.w  $14(a0),($A5A).w
@@ -11332,15 +11331,15 @@ sub_600052C6:                           ; CODE XREF: ROM:loc_600003D2â†‘p
 				bne.w   locret_600052E8
 				bsr.w   sub_60005B8A
 
-locret_600052E8:                        ; CODE XREF: sub_600052C6+1Aâ†‘j
+locret_600052E8:                        ; CODE XREF: _SetUpStartupScreen+1Aâ†‘j
 				rts
-; End of function sub_600052C6
+; End of function _SetUpStartupScreen
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_600052EA:                           ; CODE XREF: ROM:loc_60000452â†‘p
+GetStartupPict:                         ; CODE XREF: ROM:loc_60000452â†‘p
 
 var_18          set -$18
 var_10          set -$10
@@ -11370,10 +11369,10 @@ var_10          set -$10
 				bset    #2,($B21).w
 				bset    #1,($B21).w
 
-loc_60005334:                           ; CODE XREF: sub_600052EA+22â†‘j
+loc_60005334:                           ; CODE XREF: GetStartupPict+22â†‘j
 				dc.w    $A99A ; _CloseResFile
 
-loc_60005336:                           ; CODE XREF: sub_600052EA+16â†‘j
+loc_60005336:                           ; CODE XREF: GetStartupPict+16â†‘j
 				btst    #2,($B21).w
 				bne.s   locret_60005398
 				lea     $2BA(a5),a1
@@ -11399,17 +11398,17 @@ loc_60005336:                           ; CODE XREF: sub_600052EA+16â†‘j
 				bra.s   locret_60005398
 ; ---------------------------------------------------------------------------
 
-loc_60005386:                           ; CODE XREF: sub_600052EA+5Câ†‘j
-				                        ; sub_600052EA+64â†‘j
+loc_60005386:                           ; CODE XREF: GetStartupPict+5Câ†‘j
+				                        ; GetStartupPict+64â†‘j
 				move.b  ($B21).w,-(sp)
 				bset    #1,($B21).w
 				bsr.w   sub_600056AE
 				move.b  (sp)+,($B21).w
 
-locret_60005398:                        ; CODE XREF: sub_600052EA+52â†‘j
-				                        ; sub_600052EA+9Aâ†‘j
+locret_60005398:                        ; CODE XREF: GetStartupPict+52â†‘j
+				                        ; GetStartupPict+9Aâ†‘j
 				rts
-; End of function sub_600052EA
+; End of function GetStartupPict
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -11584,8 +11583,8 @@ unk_60005500:   dc.b   0                ; DATA XREF: BootAlert:loc_60005496â†‘o
 				dc.b   0
 ; ---------------------------------------------------------------------------
 
-loc_60005502:                           ; CODE XREF: sub_6000C80E+82â†“p
-				                        ; sub_6000C80E+CAâ†“p ...
+loc_60005502:                           ; CODE XREF: SetColorCodeGestalt+82â†“p
+				                        ; SetColorCodeGestalt+CAâ†“p ...
 				bra.w   sub_600033F8
 
 ; =============== S U B R O U T I N E =======================================
@@ -11649,7 +11648,7 @@ loc_6000558A:                           ; CODE XREF: InitGreeterWindow+74â†‘j
 loc_6000559A:                           ; CODE XREF: InitGreeterWindow+2Eâ†‘j
 				bsr.w   sub_600037AC
 				move.w  #1,-(sp)
-				bsr.w   sub_600055A8
+				bsr.w   ResetDMNotifyProc
 
 locret_600055A6:                        ; CODE XREF: InitGreeterWindow+6â†‘j
 				rts
@@ -11659,8 +11658,8 @@ locret_600055A6:                        ; CODE XREF: InitGreeterWindow+6â†‘j
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_600055A8:                           ; CODE XREF: InitGreeterWindow+9Câ†‘p
-				                        ; sub_6000566E+8â†“p
+ResetDMNotifyProc:                      ; CODE XREF: InitGreeterWindow+9Câ†‘p
+				                        ; PrepForResolutionChangeByThing+8â†“p
 				movea.l (sp)+,a0
 				move.w  (sp)+,d0
 				move.l  a0,-(sp)
@@ -11677,7 +11676,7 @@ sub_600055A8:                           ; CODE XREF: InitGreeterWindow+9Câ†‘p
 				bra.w   locret_60005642
 ; ---------------------------------------------------------------------------
 
-loc_600055CA:                           ; CODE XREF: sub_600055A8+8â†‘j
+loc_600055CA:                           ; CODE XREF: ResetDMNotifyProc+8â†‘j
 				subq.w  #2,sp
 				pea     loc_600055E2
 				move.l  a5,-(sp)
@@ -11689,8 +11688,8 @@ loc_600055CA:                           ; CODE XREF: sub_600055A8+8â†‘j
 				bra.w   locret_60005642
 ; ---------------------------------------------------------------------------
 
-loc_600055E2:                           ; DATA XREF: sub_600055A8+Câ†‘o
-				                        ; sub_600055A8+24â†‘o
+loc_600055E2:                           ; DATA XREF: ResetDMNotifyProc+Câ†‘o
+				                        ; ResetDMNotifyProc+24â†‘o
 				link    a6,#0
 				move.l  a5,-(sp)
 				move.w  $C(a6),d0
@@ -11710,11 +11709,11 @@ loc_600055E2:                           ; DATA XREF: sub_600055A8+Câ†‘o
 				bra.s   loc_60005616
 ; ---------------------------------------------------------------------------
 
-loc_60005612:                           ; CODE XREF: sub_600055A8+62â†‘j
+loc_60005612:                           ; CODE XREF: ResetDMNotifyProc+62â†‘j
 				dc.w    $A87D ; _ClosePort
 				dc.w    $A86F ; _OpenPort
 
-loc_60005616:                           ; CODE XREF: sub_600055A8+68â†‘j
+loc_60005616:                           ; CODE XREF: ResetDMNotifyProc+68â†‘j
 				bsr.w   sub_60005644
 				move.w  #1,-(sp)
 				bsr.w   sub_60005682
@@ -11722,11 +11721,11 @@ loc_60005616:                           ; CODE XREF: sub_600055A8+68â†‘j
 				beq.s   loc_6000562C
 				addq.w  #1,$28(a5)
 
-loc_6000562C:                           ; CODE XREF: sub_600055A8+7Eâ†‘j
+loc_6000562C:                           ; CODE XREF: ResetDMNotifyProc+7Eâ†‘j
 				bsr.w   loc_600037F0
 				bsr.l   sub_6000CEB6
 
-loc_60005636:                           ; CODE XREF: sub_600055A8+48â†‘j
+loc_60005636:                           ; CODE XREF: ResetDMNotifyProc+48â†‘j
 				movea.l (sp)+,a5
 				unlk    a6
 				movea.l (sp)+,a0
@@ -11734,17 +11733,17 @@ loc_60005636:                           ; CODE XREF: sub_600055A8+48â†‘j
 				jmp     (a0)
 ; ---------------------------------------------------------------------------
 
-locret_60005642:                        ; CODE XREF: sub_600055A8+1Eâ†‘j
-				                        ; sub_600055A8+36â†‘j
+locret_60005642:                        ; CODE XREF: ResetDMNotifyProc+1Eâ†‘j
+				                        ; ResetDMNotifyProc+36â†‘j
 				rts
-; End of function sub_600055A8
+; End of function ResetDMNotifyProc
 
 
 ; =============== S U B R O U T I N E =======================================
 
 
 sub_60005644:                           ; CODE XREF: BootAlert+86â†‘p
-				                        ; sub_600055A8:loc_60005616â†‘p ...
+				                        ; ResetDMNotifyProc:loc_60005616â†‘p ...
 				movem.l d0-d2/a0-a1,-(sp)
 				clr.l   -(sp)
 				dc.w    $AA2A ; _GetMainDevice
@@ -11767,14 +11766,14 @@ sub_60005644:                           ; CODE XREF: BootAlert+86â†‘p
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_6000566E:                           ; CODE XREF: ROM:60001802â†‘p
+PrepForResolutionChangeByThing:         ; CODE XREF: ROM:60001802â†‘p
 				pea     $70(a5)
 				dc.w    $A87D ; _ClosePort
 				clr.w   -(sp)
-				bsr.w   sub_600055A8
+				bsr.w   ResetDMNotifyProc
 				bset    #2,($B21).w
 				rts
-; End of function sub_6000566E
+; End of function PrepForResolutionChangeByThing
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -11815,7 +11814,7 @@ loc_600056A8:                           ; CODE XREF: sub_60005682+6â†‘j
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_600056AE:                           ; CODE XREF: sub_600052EA+A6â†‘p
+sub_600056AE:                           ; CODE XREF: GetStartupPict+A6â†‘p
 				                        ; BootAlert+10Câ†‘p ...
 				btst    #2,($B21).w
 				beq.s   loc_600056B8
@@ -11896,7 +11895,7 @@ loc_6000570A:                           ; CODE XREF: sub_600056AE+66â†“j
 				pea     $70(a5)
 				dc.w    $A873 ; _SetPort
 				subq.w  #4,sp
-				move.w  #$B0F5,-(sp)
+				move.w  #$B0F5,-(sp)    ; "Starting Up..."
 				dc.w    $A9BC ; _GetPicture
 				move.l  (sp)+,d0
 				beq.s   loc_6000579C
@@ -12138,7 +12137,7 @@ unk_600058D6:   dc.b   0                ; DATA XREF: BootAlert+4Eâ†‘o
 				dc.b   0
 				dc.b   0
 				dc.b   0
-unk_600058DE:   dc.b   0                ; DATA XREF: sub_600052C6+14â†‘o
+unk_600058DE:   dc.b   0                ; DATA XREF: _SetUpStartupScreen+14â†‘o
 				                        ; BootAlert+4â†‘o ...
 				dc.b   0
 unk_600058E0:   dc.b   0                ; DATA XREF: sub_60005984â†“o
@@ -12566,7 +12565,7 @@ loc_60005B78:                           ; CODE XREF: HeavyAlertModalFilter+28â†‘
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60005B8A:                           ; CODE XREF: sub_600052C6+1Eâ†‘p
+sub_60005B8A:                           ; CODE XREF: _SetUpStartupScreen+1Eâ†‘p
 				clr.l   -(sp)
 				move.l  #$6369636E,-(sp)
 				move.w  #$B1C9,-(sp)
@@ -12723,8 +12722,8 @@ sub_60005C80:                           ; CODE XREF: sub_60005C68+14â†‘p
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_60005C9C:                           ; CODE XREF: sub_600052EA+30â†‘p
-				                        ; sub_600052EA+6Eâ†‘p ...
+sub_60005C9C:                           ; CODE XREF: GetStartupPict+30â†‘p
+				                        ; GetStartupPict+6Eâ†‘p ...
 
 arg_0           set  4
 
@@ -12992,30 +12991,17 @@ loc_60005E94:                           ; CODE XREF: sub_60005E0A+68â†‘j
 				dc.w    $A9C9 ; _SysError
 				rte
 ; ---------------------------------------------------------------------------
-byte_60005E9C:  dc.b $B                 ; DATA XREF: sub_60005E0A+7Eâ†‘o
-				dc.b   9
-				dc.b  $A
-				dc.b $10
-				dc.b 3
-				dc.b   7
-				dc.b $B
-				dc.b  $B
-				dc.b   8
-				dc.b  $B
+byte_60005E9C:  dc.b $B, 9              ; DATA XREF: sub_60005E0A+7Eâ†‘o
+				dc.b $A, $10
+				dc.b 3, 7
+				dcb.b 2,$B
+				dc.b 8, $B
 				dc.b 2
-				dc.b   1
-				dc.b   1
-				dc.b  $B
-				dc.b 7
-				dc.b  $B
-				dc.b   8
-				dc.b  $B
-				dc.b 2
-				dc.b   1
-				dc.b   1
-				dc.b   1
-				dc.b 1
-				dc.b   1
+				dcb.b 2,1
+				dc.b $B, 7
+				dc.b $B, 8
+				dc.b $B, 2
+				dcb.b 5,1
 ; ---------------------------------------------------------------------------
 
 loc_60005EB4:                           ; DATA XREF: sub_60005EBA+4Eâ†“o
@@ -13111,7 +13097,7 @@ loc_60005F44:                           ; CODE XREF: sub_60005EBA+16â†‘j
 
 ; Attributes: bp-based frame
 
-sub_60005F4C:                           ; CODE XREF: ROM:6000123Eâ†‘p
+_LoadNativeDriversFromExtensionFolder:  ; CODE XREF: ROM:6000123Eâ†‘p
 
 var_116         set -$116
 var_10E         set -$10E
@@ -13125,7 +13111,7 @@ arg_2           set  $A
 				movem.l d7/a4,-(sp)
 				lea     var_104(a6),a4
 				subq.l  #2,sp
-				pea     unk_60005FE0
+				pea     aNativedriverlo ; "NativeDriverLoaderLib"
 				move.l  #$70777063,-(sp)
 				moveq   #1,d0
 				move.l  d0,-(sp)
@@ -13138,7 +13124,7 @@ arg_2           set  $A
 				bne.s   loc_60005FBA
 				subq.l  #2,sp
 				move.l  var_10A(a6),-(sp)
-				pea     unk_60005FCC
+				pea     aLoadnativedriv_0 ; "LoadNativeDrivers"
 				pea     var_4(a6)
 				pea     var_105(a6)
 				move.w  #5,-(sp)
@@ -13158,59 +13144,23 @@ arg_2           set  $A
 				dc.w    $AA5A ; _CodeFragmentDispatch
 				addq.w  #2,sp
 
-loc_60005FBA:                           ; CODE XREF: sub_60005F4C+2Eâ†‘j
-				                        ; sub_60005F4C+4Aâ†‘j ...
+loc_60005FBA:                           ; CODE XREF: _LoadNativeDriversFromExtensionFolder+2Eâ†‘j
+				                        ; _LoadNativeDriversFromExtensionFolder+4Aâ†‘j ...
 				move.w  d7,arg_2(a6)
 				movem.l var_116(a6),d7/a4
 				unlk    a6
 				movea.l (sp)+,a0
 				addq.w  #2,sp
 				jmp     (a0)
-; End of function sub_60005F4C
+; End of function _LoadNativeDriversFromExtensionFolder
 
 ; ---------------------------------------------------------------------------
-unk_60005FCC:   dc.b $11                ; DATA XREF: sub_60005F4C+36â†‘o
-				dc.b $4C ; L
-				dc.b $6F ; o
-				dc.b $61 ; a
-				dc.b $64 ; d
-				dc.b $4E ; N
-				dc.b $61 ; a
-				dc.b $74 ; t
-				dc.b $69 ; i
-				dc.b $76 ; v
-				dc.b $65 ; e
-				dc.b $44 ; D
-				dc.b $72 ; r
-				dc.b $69 ; i
-				dc.b $76 ; v
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $73 ; s
+aLoadnativedriv_0:dc.b 17,'LoadNativeDrivers'
+				                        ; DATA XREF: _LoadNativeDriversFromExtensionFolder+36â†‘o
 				dc.b   0
 				dc.b   0
-unk_60005FE0:   dc.b $15                ; DATA XREF: sub_60005F4C+Eâ†‘o
-				dc.b $4E ; N
-				dc.b $61 ; a
-				dc.b $74 ; t
-				dc.b $69 ; i
-				dc.b $76 ; v
-				dc.b $65 ; e
-				dc.b $44 ; D
-				dc.b $72 ; r
-				dc.b $69 ; i
-				dc.b $76 ; v
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $4C ; L
-				dc.b $6F ; o
-				dc.b $61 ; a
-				dc.b $64 ; d
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aNativedriverlo:dc.b 21,'NativeDriverLoaderLib'
+				                        ; DATA XREF: _LoadNativeDriversFromExtensionFolder+Eâ†‘o
 				dc.b   0
 				dc.b   0
 
@@ -13218,7 +13168,7 @@ unk_60005FE0:   dc.b $15                ; DATA XREF: sub_60005F4C+Eâ†‘o
 
 ; Attributes: bp-based frame
 
-sub_60005FF8:                           ; CODE XREF: ROM:60000A64â†‘p
+PCCardDiskBasedCheckUp:                 ; CODE XREF: ROM:60000A64â†‘p
 
 var_11A         set -$11A
 var_10E         set -$10E
@@ -13231,7 +13181,7 @@ var_100         set -$100
 				movem.l d7/a3-a4,-(sp)
 				lea     var_100(a6),a3
 				subq.l  #2,sp
-				pea     unk_6000609A
+				pea     aPccard         ; "PCCard"
 				move.l  #$70777063,-(sp)
 				moveq   #2,d0
 				move.l  d0,-(sp)
@@ -13248,7 +13198,7 @@ var_100         set -$100
 				movea.l d0,a4
 				subq.l  #2,sp
 				move.l  var_106(a6),-(sp)
-				pea     unk_60006088
+				pea     aDiskbasedcheck ; "DiskBasedCheckUp"
 				pea     var_10A(a6)
 				pea     var_101(a6)
 				move.w  #5,-(sp)
@@ -13271,8 +13221,8 @@ var_100         set -$100
 				dc.w    $AA59 ; _MixedModeDispatch
 				movea.l (sp)+,a4
 
-loc_60006070:                           ; CODE XREF: sub_60005FF8+56â†‘j
-				                        ; sub_60005FF8+62â†‘j
+loc_60006070:                           ; CODE XREF: PCCardDiskBasedCheckUp+56â†‘j
+				                        ; PCCardDiskBasedCheckUp+62â†‘j
 				move.l  a4,d0
 				beq.s   loc_6000607E
 				movea.l a4,a0
@@ -13281,46 +13231,25 @@ loc_60006070:                           ; CODE XREF: sub_60005FF8+56â†‘j
 				moveq   #1,d0
 				dc.w    $AA59 ; _MixedModeDispatch
 
-loc_6000607E:                           ; CODE XREF: sub_60005FF8+32â†‘j
-				                        ; sub_60005FF8+7Aâ†‘j
+loc_6000607E:                           ; CODE XREF: PCCardDiskBasedCheckUp+32â†‘j
+				                        ; PCCardDiskBasedCheckUp+7Aâ†‘j
 				movem.l var_11A(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_60005FF8
+; End of function PCCardDiskBasedCheckUp
 
 ; ---------------------------------------------------------------------------
-unk_60006088:   dc.b $10                ; DATA XREF: sub_60005FF8+3Eâ†‘o
-				dc.b $44 ; D
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $6B ; k
-				dc.b $42 ; B
-				dc.b $61 ; a
-				dc.b $73 ; s
-				dc.b $65 ; e
-				dc.b $64 ; d
-				dc.b $43 ; C
-				dc.b $68 ; h
-				dc.b $65 ; e
-				dc.b $63 ; c
-				dc.b $6B ; k
-				dc.b $55 ; U
-				dc.b $70 ; p
+aDiskbasedcheck:dc.b 16,'DiskBasedCheckUp'
+				                        ; DATA XREF: PCCardDiskBasedCheckUp+3Eâ†‘o
 				dc.b   0
-unk_6000609A:   dc.b   6                ; DATA XREF: sub_60005FF8+Eâ†‘o
-				dc.b $50 ; P
-				dc.b $43 ; C
-				dc.b $43 ; C
-				dc.b $61 ; a
-				dc.b $72 ; r
-				dc.b $64 ; d
+aPccard:        dc.b 6,'PCCard'         ; DATA XREF: PCCardDiskBasedCheckUp+Eâ†‘o
 				dc.b   0
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_600060A2:                           ; CODE XREF: ROM:loc_6000133Aâ†‘p
+_FireWirePerformLateInits:              ; CODE XREF: ROM:loc_6000133Aâ†‘p
 
 var_C           set -$C
 var_4           set -4
@@ -13344,19 +13273,19 @@ var_4           set -4
 				movea.l (a0),a4
 				jsr     (a4)
 
-loc_600060DA:                           ; CODE XREF: sub_600060A2+1Aâ†‘j
-				                        ; sub_600060A2+24â†‘j
+loc_600060DA:                           ; CODE XREF: _FireWirePerformLateInits+1Aâ†‘j
+				                        ; _FireWirePerformLateInits+24â†‘j
 				movem.l var_C(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_600060A2
+; End of function _FireWirePerformLateInits
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_600060E4:                           ; CODE XREF: ROM:loc_600012F6â†‘p
+_USBDiskCheck:                          ; CODE XREF: ROM:loc_600012F6â†‘p
 
 var_11A         set -$11A
 var_10E         set -$10E
@@ -13369,7 +13298,7 @@ var_100         set -$100
 				movem.l d7/a3-a4,-(sp)
 				lea     var_100(a6),a3
 				subq.l  #2,sp
-				pea     unk_60006186
+				pea     aUsbfamilyexper ; "USBFamilyExpertLib"
 				move.l  #$70777063,-(sp)
 				moveq   #2,d0
 				move.l  d0,-(sp)
@@ -13386,7 +13315,7 @@ var_100         set -$100
 				movea.l d0,a4
 				subq.l  #2,sp
 				move.l  var_106(a6),-(sp)
-				pea     unk_60006174
+				pea     aDiskbasedcheck_0 ; "DiskBasedCheckUp"
 				pea     var_10A(a6)
 				pea     var_101(a6)
 				move.w  #5,-(sp)
@@ -13409,8 +13338,8 @@ var_100         set -$100
 				dc.w    $AA59 ; _MixedModeDispatch
 				movea.l (sp)+,a4
 
-loc_6000615C:                           ; CODE XREF: sub_600060E4+56â†‘j
-				                        ; sub_600060E4+62â†‘j
+loc_6000615C:                           ; CODE XREF: _USBDiskCheck+56â†‘j
+				                        ; _USBDiskCheck+62â†‘j
 				move.l  a4,d0
 				beq.s   loc_6000616A
 				movea.l a4,a0
@@ -13419,58 +13348,26 @@ loc_6000615C:                           ; CODE XREF: sub_600060E4+56â†‘j
 				moveq   #1,d0
 				dc.w    $AA59 ; _MixedModeDispatch
 
-loc_6000616A:                           ; CODE XREF: sub_600060E4+32â†‘j
-				                        ; sub_600060E4+7Aâ†‘j
+loc_6000616A:                           ; CODE XREF: _USBDiskCheck+32â†‘j
+				                        ; _USBDiskCheck+7Aâ†‘j
 				movem.l var_11A(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_600060E4
+; End of function _USBDiskCheck
 
 ; ---------------------------------------------------------------------------
-unk_60006174:   dc.b $10                ; DATA XREF: sub_600060E4+3Eâ†‘o
-				dc.b $44 ; D
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $6B ; k
-				dc.b $42 ; B
-				dc.b $61 ; a
-				dc.b $73 ; s
-				dc.b $65 ; e
-				dc.b $64 ; d
-				dc.b $43 ; C
-				dc.b $68 ; h
-				dc.b $65 ; e
-				dc.b $63 ; c
-				dc.b $6B ; k
-				dc.b $55 ; U
-				dc.b $70 ; p
+aDiskbasedcheck_0:dc.b 16,'DiskBasedCheckUp'
+				                        ; DATA XREF: _USBDiskCheck+3Eâ†‘o
 				dc.b   0
-unk_60006186:   dc.b $12                ; DATA XREF: sub_600060E4+Eâ†‘o
-				dc.b $55 ; U
-				dc.b $53 ; S
-				dc.b $42 ; B
-				dc.b $46 ; F
-				dc.b $61 ; a
-				dc.b $6D ; m
-				dc.b $69 ; i
-				dc.b $6C ; l
-				dc.b $79 ; y
-				dc.b $45 ; E
-				dc.b $78 ; x
-				dc.b $70 ; p
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $74 ; t
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aUsbfamilyexper:dc.b 18,'USBFamilyExpertLib'
+				                        ; DATA XREF: _USBDiskCheck+Eâ†‘o
 				dc.b   0
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000619A:                           ; CODE XREF: ROM:loc_60000DC8â†‘p
+_InstallITT:                            ; CODE XREF: ROM:loc_60000DC8â†‘p
 
 var_C           set -$C
 var_4           set -4
@@ -13484,7 +13381,7 @@ var_4           set -4
 				movea.l (sp)+,a0
 				dc.w    $A01B ; _SetZone
 				subq.l  #4,sp
-				move.l  #$63697474,-(sp)
+				move.l  #'citt',-(sp)
 				moveq   #$2D,d0 ; '-'
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -13501,21 +13398,21 @@ var_4           set -4
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_600061D8:                           ; CODE XREF: sub_6000619A+28â†‘j
-				                        ; sub_6000619A+2Câ†‘j
+loc_600061D8:                           ; CODE XREF: _InstallITT+28â†‘j
+				                        ; _InstallITT+2Câ†‘j
 				movea.l a3,a0
 				dc.w    $A01B ; _SetZone
 				movem.l var_C(a6),a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000619A
+; End of function _InstallITT
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_600061E6:                           ; CODE XREF: ROM:loc_60001520â†‘p
+_DoSCSILateLoad:                        ; CODE XREF: ROM:loc_60001520â†‘p
 
 var_C           set -$C
 var_4           set -4
@@ -13529,7 +13426,7 @@ var_4           set -4
 				movea.l (sp)+,a0
 				dc.w    $A01B ; _SetZone
 				subq.l  #4,sp
-				move.l  #$63697474,-(sp)
+				move.l  #'citt',-(sp)
 				moveq   #$2E,d0 ; '.'
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -13546,21 +13443,21 @@ var_4           set -4
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_60006224:                           ; CODE XREF: sub_600061E6+28â†‘j
-				                        ; sub_600061E6+2Câ†‘j
+loc_60006224:                           ; CODE XREF: _DoSCSILateLoad+28â†‘j
+				                        ; _DoSCSILateLoad+2Câ†‘j
 				movea.l a3,a0
 				dc.w    $A01B ; _SetZone
 				movem.l var_C(a6),a3-a4
 				unlk    a6
 				rts
-; End of function sub_600061E6
+; End of function _DoSCSILateLoad
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_60006232:                           ; CODE XREF: ROM:loc_600017B8â†‘p
+_MakeObjectSupportLibResidentHack:      ; CODE XREF: ROM:loc_600017B8â†‘p
 
 var_110         set -$110
 var_10C         set -$10C
@@ -13582,7 +13479,7 @@ var_100         set -$100
 				btst    #0,d0
 				beq.s   loc_6000627C
 				subq.l  #2,sp
-				pea     unk_60006284
+				pea     aObjectsupportl ; "ObjectSupportLib"
 				move.l  #$70777063,-(sp)
 				moveq   #1,d0
 				move.l  d0,-(sp)
@@ -13593,38 +13490,23 @@ var_100         set -$100
 				dc.w    $AA5A ; _CodeFragmentDispatch
 				addq.w  #2,sp
 
-loc_6000627C:                           ; CODE XREF: sub_60006232+1Câ†‘j
-				                        ; sub_60006232+26â†‘j
+loc_6000627C:                           ; CODE XREF: _MakeObjectSupportLibResidentHack+1Câ†‘j
+				                        ; _MakeObjectSupportLibResidentHack+26â†‘j
 				movea.l var_110(a6),a4
 				unlk    a6
 				rts
-; End of function sub_60006232
+; End of function _MakeObjectSupportLibResidentHack
 
 ; ---------------------------------------------------------------------------
-unk_60006284:   dc.b $10                ; DATA XREF: sub_60006232+2Aâ†‘o
-				dc.b $4F ; O
-				dc.b $62 ; b
-				dc.b $6A ; j
-				dc.b $65 ; e
-				dc.b $63 ; c
-				dc.b $74 ; t
-				dc.b $53 ; S
-				dc.b $75 ; u
-				dc.b $70 ; p
-				dc.b $70 ; p
-				dc.b $6F ; o
-				dc.b $72 ; r
-				dc.b $74 ; t
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aObjectsupportl:dc.b 16,'ObjectSupportLib'
+				                        ; DATA XREF: _MakeObjectSupportLibResidentHack+2Aâ†‘o
 				dc.b   0
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_60006296:                           ; CODE XREF: ROM:600010E0â†‘p
+_GoInstallSerialDMA:                    ; CODE XREF: ROM:600010E0â†‘p
 
 var_C           set -$C
 var_4           set -4
@@ -13648,7 +13530,7 @@ var_4           set -4
 				movea.l $6C(a0),a0
 				move.b  #$88,$144(a0)
 
-loc_600062C0:                           ; CODE XREF: sub_60006296+12â†‘j
+loc_600062C0:                           ; CODE XREF: _GoInstallSerialDMA+12â†‘j
 				move.l  ($2400).w,d0
 ; ---------------------------------------------------------------------------
 				dc.b $C0
@@ -13670,17 +13552,17 @@ loc_600062C0:                           ; CODE XREF: sub_60006296+12â†‘j
 ; ---------------------------------------------------------------------------
 				beq.s   loc_600062EC
 
-loc_600062D8:                           ; CODE XREF: sub_60006296+34â†‘j
+loc_600062D8:                           ; CODE XREF: _GoInstallSerialDMA+34â†‘j
 				subq.l  #2,sp
-				move.l  #$7368616C,-(sp)
+				move.l  #'shal',-(sp)
 				moveq   #3,d0
 				move.l  d0,-(sp)
 				move.w  #$402,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
 				addq.w  #2,sp
 
-loc_600062EC:                           ; CODE XREF: sub_60006296+40â†‘j
-				move.l  #$7368616C,d0
+loc_600062EC:                           ; CODE XREF: _GoInstallSerialDMA+40â†‘j
+				move.l  #'shal',d0
 				lea     var_4(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -13688,7 +13570,7 @@ loc_600062EC:                           ; CODE XREF: sub_60006296+40â†‘j
 				tst.w   d0
 				bne.s   loc_60006320
 				subq.l  #4,sp
-				move.l  #$6E737264,-(sp)
+				move.l  #'nsrd',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -13702,19 +13584,19 @@ loc_600062EC:                           ; CODE XREF: sub_60006296+40â†‘j
 				movea.l (a4),a3
 				jsr     (a3)
 
-loc_60006320:                           ; CODE XREF: sub_60006296+68â†‘j
-				                        ; sub_60006296+7Câ†‘j
+loc_60006320:                           ; CODE XREF: _GoInstallSerialDMA+68â†‘j
+				                        ; _GoInstallSerialDMA+7Câ†‘j
 				movem.l var_C(a6),a3-a4
 				unlk    a6
 				rts
-; End of function sub_60006296
+; End of function _GoInstallSerialDMA
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000632A:                           ; CODE XREF: ROM:loc_60001372â†‘p
+_FinishInitDisplayManager:              ; CODE XREF: ROM:loc_60001372â†‘p
 
 var_10          set -$10
 var_4           set -4
@@ -13753,19 +13635,19 @@ var_4           set -4
 				beq.s   loc_60006372
 				moveq   #1,d7
 
-loc_60006372:                           ; CODE XREF: sub_6000632A+44â†‘j
+loc_60006372:                           ; CODE XREF: _FinishInitDisplayManager+44â†‘j
 				subq.l  #2,sp
 				move.b  d7,-(sp)
 				move.w  #$1ED,d0
 				dc.w    $ABEB ; _DisplayDispatch
 				addq.w  #2,sp
 
-loc_6000637E:                           ; CODE XREF: sub_6000632A+20â†‘j
-				                        ; sub_6000632A+2Câ†‘j
+loc_6000637E:                           ; CODE XREF: _FinishInitDisplayManager+20â†‘j
+				                        ; _FinishInitDisplayManager+2Câ†‘j
 				movem.l var_10(a6),d3/d6-d7
 				unlk    a6
 				rts
-; End of function sub_6000632A
+; End of function _FinishInitDisplayManager
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -14557,7 +14439,7 @@ aAty:           dc.b 'ATY,',0           ; DATA XREF: sub_600068BC+10â†‘o
 
 ; Attributes: bp-based frame
 
-sub_600068EE:                           ; CODE XREF: sub_600069D2+2Aâ†“p
+sub_600068EE:                           ; CODE XREF: PatchADBReInit+2Aâ†“p
 
 var_12          set -$12
 var_A           set -$A
@@ -14598,8 +14480,8 @@ loc_6000691E:                           ; CODE XREF: sub_600068EE+26â†‘j
 
 ; Attributes: bp-based frame
 
-sub_60006928:                           ; DATA XREF: sub_600069D2+90â†“o
-				                        ; sub_600069D2+A2â†“o
+sub_60006928:                           ; DATA XREF: PatchADBReInit+90â†“o
+				                        ; PatchADBReInit+A2â†“o
 
 var_8           set -8
 var_4           set -4
@@ -14687,8 +14569,8 @@ loc_600069CA:                           ; CODE XREF: sub_60006928+18â†‘j
 
 ; Attributes: bp-based frame
 
-sub_600069D2:                           ; CODE XREF: ROM:60000A8Câ†‘p
-				                        ; DATA XREF: sub_600069D2+8Câ†“o
+PatchADBReInit:                         ; CODE XREF: ROM:60000A8Câ†‘p
+				                        ; DATA XREF: PatchADBReInit+8Câ†“o
 
 var_10          set -$10
 
@@ -14700,7 +14582,7 @@ var_10          set -$10
 				move.l  a4,d0
 				beq.w   loc_60006A9C
 				subq.l  #2,sp
-				move.l  #$61646272,-(sp)
+				move.l  #'adbr',-(sp)
 				move.l  a4,-(sp)
 				move.w  #$401,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
@@ -14739,14 +14621,14 @@ var_10          set -$10
 				clr.b   6(a4,d0.l)
 				addq.w  #1,4(a4)
 
-loc_60006A50:                           ; CODE XREF: sub_600069D2+30â†‘j
-				                        ; sub_600069D2+4Aâ†‘j
+loc_60006A50:                           ; CODE XREF: PatchADBReInit+30â†‘j
+				                        ; PatchADBReInit+4Aâ†‘j
 				tst.w   4(a4)
 				beq.s   loc_60006A88
 				move.w  #$A07B,d0
 				dc.w    $A346 ; _GetOSTrapAddress
 				move.l  a0,(a4)
-				lea     sub_600069D2,a0
+				lea     PatchADBReInit,a0
 				lea     sub_60006928,a1
 				move.l  a0,d7
 				sub.l   a1,d7
@@ -14765,29 +14647,29 @@ loc_60006A50:                           ; CODE XREF: sub_600069D2+30â†‘j
 				bra.s   loc_60006A9C
 ; ---------------------------------------------------------------------------
 
-loc_60006A88:                           ; CODE XREF: sub_600069D2+82â†‘j
+loc_60006A88:                           ; CODE XREF: PatchADBReInit+82â†‘j
 				movea.l a4,a0
 				dc.w    $A01F ; _DisposePtr
 				subq.l  #2,sp
-				move.l  #$61646272,-(sp)
+				move.l  #'adbr',-(sp)
 				move.w  #$203,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
 				move.w  (sp)+,d6
 
-loc_60006A9C:                           ; CODE XREF: sub_600069D2+10â†‘j
-				                        ; sub_600069D2+26â†‘j ...
+loc_60006A9C:                           ; CODE XREF: PatchADBReInit+10â†‘j
+				                        ; PatchADBReInit+26â†‘j ...
 				movem.l var_10(a6),d6-d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_600069D2
+; End of function PatchADBReInit
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_60006AA6:                           ; CODE XREF: sub_600069D2+32â†‘p
-				                        ; DATA XREF: sub_600069D2+3Aâ†‘o ...
+sub_60006AA6:                           ; CODE XREF: PatchADBReInit+32â†‘p
+				                        ; DATA XREF: PatchADBReInit+3Aâ†‘o ...
 
 var_4C          set -$4C
 var_3C          set -$3C
@@ -15620,7 +15502,7 @@ loc_600070DC:                           ; CODE XREF: sub_60006FA2+46â†‘j
 
 ; Attributes: bp-based frame
 
-sub_600070E6:                           ; DATA XREF: sub_600069D2+36â†‘o
+sub_600070E6:                           ; DATA XREF: PatchADBReInit+36â†‘o
 				link    a6,#0
 				unlk    a6
 				rts
@@ -15631,7 +15513,7 @@ sub_600070E6:                           ; DATA XREF: sub_600069D2+36â†‘o
 
 ; Attributes: bp-based frame
 
-sub_600070EE:                           ; CODE XREF: ROM:loc_60000C78â†‘p
+_IncreaseEventQueueSize:                ; CODE XREF: ROM:loc_60000C78â†‘p
 
 var_1C          set -$1C
 var_8           set -8
@@ -15662,7 +15544,7 @@ var_4           set -4
 				bra.s   loc_6000715E
 ; ---------------------------------------------------------------------------
 
-loc_6000711C:                           ; CODE XREF: sub_600070EE+72â†“j
+loc_6000711C:                           ; CODE XREF: _IncreaseEventQueueSize+72â†“j
 				moveq   #0,d0
 				move.w  6(a4),d0
 				moveq   #$FFFFFFFF,d1
@@ -15682,11 +15564,11 @@ loc_6000711C:                           ; CODE XREF: sub_600070EE+72â†“j
 				movea.l var_4(a6),a0
 				move.w  $14(a4),$14(a0)
 
-loc_6000715C:                           ; CODE XREF: sub_600070EE+38â†‘j
-				                        ; sub_600070EE+4Eâ†‘j
+loc_6000715C:                           ; CODE XREF: _IncreaseEventQueueSize+38â†‘j
+				                        ; _IncreaseEventQueueSize+4Eâ†‘j
 				movea.l (a4),a4
 
-loc_6000715E:                           ; CODE XREF: sub_600070EE+2Câ†‘j
+loc_6000715E:                           ; CODE XREF: _IncreaseEventQueueSize+2Câ†‘j
 				move.l  a4,d0
 				bne.s   loc_6000711C
 				move.l  a3,d0
@@ -15702,19 +15584,19 @@ loc_6000715E:                           ; CODE XREF: sub_600070EE+2Câ†‘j
 				movea.l a3,a0
 				dc.w    $A01F ; _DisposePtr
 
-loc_60007180:                           ; CODE XREF: sub_600070EE+14â†‘j
-				                        ; sub_600070EE+76â†‘j ...
+loc_60007180:                           ; CODE XREF: _IncreaseEventQueueSize+14â†‘j
+				                        ; _IncreaseEventQueueSize+76â†‘j ...
 				movem.l var_1C(a6),d3/d6-d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_600070EE
+; End of function _IncreaseEventQueueSize
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000718A:                           ; CODE XREF: ROM:6000058Câ†‘p
+EnforceCDOnlyBoot:                      ; CODE XREF: ROM:6000058Câ†‘p
 
 var_10          set -$10
 
@@ -15724,7 +15606,7 @@ var_10          set -$10
 				moveq   #0,d0
 				movea.l d0,a4
 				subq.l  #4,sp
-				move.l  #$78626F6F,-(sp)
+				move.l  #'xboo',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -15745,12 +15627,12 @@ var_10          set -$10
 				beq.s   loc_600071D0
 				moveq   #1,d3
 
-loc_600071D0:                           ; CODE XREF: sub_6000718A+38â†‘j
-				                        ; sub_6000718A+42â†‘j
+loc_600071D0:                           ; CODE XREF: EnforceCDOnlyBoot+38â†‘j
+				                        ; EnforceCDOnlyBoot+42â†‘j
 				move.b  d3,d7
 
-loc_600071D2:                           ; CODE XREF: sub_6000718A+20â†‘j
-				                        ; sub_6000718A+24â†‘j
+loc_600071D2:                           ; CODE XREF: EnforceCDOnlyBoot+20â†‘j
+				                        ; EnforceCDOnlyBoot+24â†‘j
 				tst.b   d7
 				bne.s   loc_600071E0
 				moveq   #$76,d0 ; 'v'
@@ -15758,18 +15640,18 @@ loc_600071D2:                           ; CODE XREF: sub_6000718A+20â†‘j
 				move.w  #2,-(sp)
 				dc.w    $A895 ; _ShutDown
 
-loc_600071E0:                           ; CODE XREF: sub_6000718A+4Aâ†‘j
+loc_600071E0:                           ; CODE XREF: EnforceCDOnlyBoot+4Aâ†‘j
 				movem.l var_10(a6),d3/d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000718A
+; End of function EnforceCDOnlyBoot
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_600071EA:                           ; CODE XREF: ROM:60000592â†‘p
+AdjustRAMForCDBoot:                     ; CODE XREF: ROM:60000592â†‘p
 
 var_C           set -$C
 var_4           set -4
@@ -15777,7 +15659,7 @@ var_4           set -4
 				link    a6,#-4
 				movem.l d7/a4,-(sp)
 				subq.l  #4,sp
-				move.l  #$78626F6F,-(sp)
+				move.l  #'xboo',-(sp)
 				moveq   #2,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -15787,7 +15669,7 @@ var_4           set -4
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 				subq.l  #4,sp
-				move.l  #$6D6C726D,-(sp)
+				move.l  #'mlrm',-(sp)
 				moveq   #0,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -15796,7 +15678,7 @@ var_4           set -4
 				beq.s   loc_60007250
 				tst.l   (a4)
 				beq.s   loc_60007250
-				move.l  #$72616D20,d0
+				move.l  #'ram ',d0
 				lea     var_4(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -15811,17 +15693,17 @@ var_4           set -4
 				andi.w  #$DFFF,d7
 				move.w  d7,($B20).w
 
-loc_6000724C:                           ; CODE XREF: sub_600071EA+4Aâ†‘j
-				                        ; sub_600071EA+54â†‘j
+loc_6000724C:                           ; CODE XREF: AdjustRAMForCDBoot+4Aâ†‘j
+				                        ; AdjustRAMForCDBoot+54â†‘j
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_60007250:                           ; CODE XREF: sub_600071EA+1Aâ†‘j
-				                        ; sub_600071EA+32â†‘j ...
+loc_60007250:                           ; CODE XREF: AdjustRAMForCDBoot+1Aâ†‘j
+				                        ; AdjustRAMForCDBoot+32â†‘j ...
 				movem.l var_C(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_600071EA
+; End of function AdjustRAMForCDBoot
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -16564,7 +16446,7 @@ sub_6000780A:                           ; CODE XREF: ROM:loc_6000038Aâ†‘p
 
 ; Attributes: bp-based frame
 
-sub_6000780E:                           ; CODE XREF: sub_60007A14+194â†“p
+sub_6000780E:                           ; CODE XREF: PlayWithNewNanoKernel+194â†“p
 
 var_14          set -$14
 var_8           set -8
@@ -16580,7 +16462,7 @@ arg_4           set  $C
 				move.w  arg_2(a6),-(sp)
 				dc.w    $A998 ; _UseResFile
 				subq.l  #4,sp
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				dc.w    $A81F ; _Get1Resource
@@ -16592,7 +16474,7 @@ arg_4           set  $C
 
 loc_6000783E:                           ; CODE XREF: sub_6000780E+26â†‘j
 				subq.l  #4,sp
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #2,d0
 				move.w  d0,-(sp)
 				dc.w    $A81F ; _Get1Resource
@@ -16630,14 +16512,14 @@ loc_6000787A:                           ; CODE XREF: sub_6000780E+56â†‘j
 loc_60007894:                           ; CODE XREF: sub_6000780E+80â†‘j
 				moveq   #1,d0
 				move.l  d0,-(sp)
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				jsr     sub_600077E2
 				moveq   #2,d0
 				move.l  d0,-(sp)
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				jsr     sub_600077E2
 				move.l  var_8(a6),-(sp)
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				pea     unk_6000790A
@@ -16651,7 +16533,7 @@ loc_60007894:                           ; CODE XREF: sub_6000780E+80â†‘j
 				tst.l   var_4(a6)
 				beq.s   loc_600078EC
 				move.l  var_4(a6),-(sp)
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #2,d0
 				move.w  d0,-(sp)
 				pea     unk_6000790A
@@ -16682,33 +16564,18 @@ loc_600078FA:                           ; CODE XREF: sub_6000780E+2Câ†‘j
 unk_6000790A:   dc.b   0                ; DATA XREF: sub_6000780E+B0â†‘o
 				                        ; sub_6000780E+D8â†‘o
 				dc.b   0
+; ---------------------------------------------------------------------------
 
-; =============== S U B R O U T I N E =======================================
+j_SetColorCodeGestalt:                  ; CODE XREF: ROM:6000042Câ†‘p
+				bra.w   SetColorCodeGestalt
+; ---------------------------------------------------------------------------
 
-; Attributes: thunk
+j_EmulatorIsOnDisk:                     ; CODE XREF: ROM:600003F2â†‘p
+				bra.w   EmulatorIsOnDisk
+; ---------------------------------------------------------------------------
 
-sub_6000790C:                           ; CODE XREF: ROM:6000042Câ†‘p
-				bra.w   sub_6000C80E
-; End of function sub_6000790C
-
-
-; =============== S U B R O U T I N E =======================================
-
-; Attributes: thunk
-
-sub_60007910:                           ; CODE XREF: ROM:600003F2â†‘p
-				bra.w   sub_600089EA
-; End of function sub_60007910
-
-
-; =============== S U B R O U T I N E =======================================
-
-; Attributes: thunk
-
-sub_60007914:                           ; CODE XREF: ROM:loc_600003E2â†‘p
-				bra.w   loc_60009A38
-; End of function sub_60007914
-
+j__LoadMultitaskingNanoKernel:          ; CODE XREF: ROM:loc_600003E2â†‘p
+				bra.w   _LoadMultitaskingNanoKernel
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -16817,7 +16684,7 @@ loc_600079C6:                           ; CODE XREF: sub_60007918+32â†‘j
 
 ; Attributes: bp-based frame
 
-sub_600079D2:                           ; CODE XREF: sub_60007A14+56â†“p
+sub_600079D2:                           ; CODE XREF: PlayWithNewNanoKernel+56â†“p
 
 var_46          set -$46
 var_3E          set -$3E
@@ -16856,7 +16723,7 @@ arg_4           set  $C
 
 ; Attributes: bp-based frame
 
-sub_60007A14:                           ; CODE XREF: sub_60007BDE+100â†“p
+PlayWithNewNanoKernel:                  ; CODE XREF: sub_60007BDE+100â†“p
 
 var_82          set -$82
 var_5E          set -$5E
@@ -16882,7 +16749,7 @@ arg_0           set  8
 				bra.w   loc_60007BCE
 ; ---------------------------------------------------------------------------
 
-loc_60007A3C:                           ; CODE XREF: sub_60007A14+1Eâ†‘j
+loc_60007A3C:                           ; CODE XREF: PlayWithNewNanoKernel+1Eâ†‘j
 				movea.l (a3),a0
 				move.l  (a0),d3
 				move.l  4(a0),d4
@@ -16896,12 +16763,12 @@ loc_60007A3C:                           ; CODE XREF: sub_60007A14+1Eâ†‘j
 				bra.w   loc_60007BCA
 ; ---------------------------------------------------------------------------
 
-loc_60007A5A:                           ; CODE XREF: sub_60007A14+3Câ†‘j
+loc_60007A5A:                           ; CODE XREF: PlayWithNewNanoKernel+3Câ†‘j
 				tst.w   d5
 				bne.s   loc_60007A62
 				move.w  ($A58).w,d5
 
-loc_60007A62:                           ; CODE XREF: sub_60007A14+48â†‘j
+loc_60007A62:                           ; CODE XREF: PlayWithNewNanoKernel+48â†‘j
 				pea     var_5E(a6)
 				ext.l   d5
 				move.l  d5,-(sp)
@@ -16985,7 +16852,7 @@ loc_60007A62:                           ; CODE XREF: sub_60007A14+48â†‘j
 				bra.s   loc_60007B92
 ; ---------------------------------------------------------------------------
 
-loc_60007B3C:                           ; CODE XREF: sub_60007A14+122â†‘j
+loc_60007B3C:                           ; CODE XREF: PlayWithNewNanoKernel+122â†‘j
 				movea.l a4,a0
 				dc.w    $A029 ; _HLock
 				move.l  #$10000,var_4(a6)
@@ -16993,7 +16860,7 @@ loc_60007B3C:                           ; CODE XREF: sub_60007A14+122â†‘j
 				bra.s   loc_60007B8A
 ; ---------------------------------------------------------------------------
 
-loc_60007B4C:                           ; CODE XREF: sub_60007A14+178â†“j
+loc_60007B4C:                           ; CODE XREF: PlayWithNewNanoKernel+178â†“j
 				subq.l  #2,sp
 				move.w  var_8(a6),-(sp)
 				pea     var_4(a6)
@@ -17005,12 +16872,12 @@ loc_60007B4C:                           ; CODE XREF: sub_60007A14+178â†“j
 				tst.w   d7
 				bne.s   loc_60007B8E
 
-loc_60007B68:                           ; CODE XREF: sub_60007A14+14Eâ†‘j
+loc_60007B68:                           ; CODE XREF: PlayWithNewNanoKernel+14Eâ†‘j
 				cmpi.w  #$FFD9,d7
 				bne.s   loc_60007B70
 				clr.w   d7
 
-loc_60007B70:                           ; CODE XREF: sub_60007A14+158â†‘j
+loc_60007B70:                           ; CODE XREF: PlayWithNewNanoKernel+158â†‘j
 				subq.l  #2,sp
 				move.w  var_6(a6),-(sp)
 				pea     var_4(a6)
@@ -17021,17 +16888,17 @@ loc_60007B70:                           ; CODE XREF: sub_60007A14+158â†‘j
 				bne.s   loc_60007B8E
 				add.l   var_4(a6),d6
 
-loc_60007B8A:                           ; CODE XREF: sub_60007A14+136â†‘j
+loc_60007B8A:                           ; CODE XREF: PlayWithNewNanoKernel+136â†‘j
 				cmp.l   d6,d4
 				bhi.s   loc_60007B4C
 
-loc_60007B8E:                           ; CODE XREF: sub_60007A14+152â†‘j
-				                        ; sub_60007A14+170â†‘j
+loc_60007B8E:                           ; CODE XREF: PlayWithNewNanoKernel+152â†‘j
+				                        ; PlayWithNewNanoKernel+170â†‘j
 				movea.l a4,a0
 				dc.w    $A023 ; _DisposeHandle
 
-loc_60007B92:                           ; CODE XREF: sub_60007A14+FEâ†‘j
-				                        ; sub_60007A14+114â†‘j ...
+loc_60007B92:                           ; CODE XREF: PlayWithNewNanoKernel+FEâ†‘j
+				                        ; PlayWithNewNanoKernel+114â†‘j ...
 				subq.l  #2,sp
 				move.w  var_6(a6),-(sp)
 				jsr     sub_600031A2
@@ -17045,8 +16912,8 @@ loc_60007B92:                           ; CODE XREF: sub_60007A14+FEâ†‘j
 				move.w  d0,d7
 				addq.w  #8,sp
 
-loc_60007BB0:                           ; CODE XREF: sub_60007A14+BEâ†‘j
-				                        ; sub_60007A14+D6â†‘j ...
+loc_60007BB0:                           ; CODE XREF: PlayWithNewNanoKernel+BEâ†‘j
+				                        ; PlayWithNewNanoKernel+D6â†‘j ...
 				tst.w   d7
 				beq.s   loc_60007BBE
 				subq.l  #2,sp
@@ -17055,34 +16922,29 @@ loc_60007BB0:                           ; CODE XREF: sub_60007A14+BEâ†‘j
 				dc.w    $AA52 ; _HighLevelFSDispatch
 				addq.w  #2,sp
 
-loc_60007BBE:                           ; CODE XREF: sub_60007A14+8Eâ†‘j
-				                        ; sub_60007A14+ACâ†‘j ...
+loc_60007BBE:                           ; CODE XREF: PlayWithNewNanoKernel+8Eâ†‘j
+				                        ; PlayWithNewNanoKernel+ACâ†‘j ...
 				subq.l  #2,sp
 				move.w  var_8(a6),-(sp)
 				jsr     sub_600031A2
 				addq.w  #2,sp
 
-loc_60007BCA:                           ; CODE XREF: sub_60007A14+42â†‘j
-				                        ; sub_60007A14+60â†‘j ...
+loc_60007BCA:                           ; CODE XREF: PlayWithNewNanoKernel+42â†‘j
+				                        ; PlayWithNewNanoKernel+60â†‘j ...
 				move.l  a3,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_60007BCE:                           ; CODE XREF: sub_60007A14+24â†‘j
+loc_60007BCE:                           ; CODE XREF: PlayWithNewNanoKernel+24â†‘j
 				move.w  d7,d0
 				movem.l var_82(a6),d3-d7/a2-a4
 				unlk    a6
 				rts
-; End of function sub_60007A14
+; End of function PlayWithNewNanoKernel
 
+; ---------------------------------------------------------------------------
 
-; =============== S U B R O U T I N E =======================================
-
-; Attributes: thunk
-
-sub_60007BDA:                           ; CODE XREF: ROM:60000732â†‘p
-				bra.w   sub_6000943A
-; End of function sub_60007BDA
-
+j_DisableEDiskIfNotEnoughRAM:           ; CODE XREF: ROM:60000732â†‘p
+				bra.w   DisableEDiskIfNotEnoughRAM
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -17115,7 +16977,7 @@ loc_60007BF8:                           ; CODE XREF: sub_60007BDE+1Câ†“j
 				move.w  (a0)+,(a1)+
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$6D616373,-(sp)
+				move.l  #'macs',-(sp)
 				moveq   #0,d0
 				move.b  d0,-(sp)
 				pea     var_CC(a6)
@@ -17162,7 +17024,7 @@ loc_60007C46:                           ; CODE XREF: sub_60007BDE+58â†‘j
 				moveq   #1,d5
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$74727368,-(sp)
+				move.l  #'trsh',-(sp)
 				moveq   #1,d0
 				move.b  d0,-(sp)
 				pea     var_118(a6)
@@ -17208,7 +17070,7 @@ loc_60007CD0:                           ; CODE XREF: sub_60007BDE+80â†‘j
 
 loc_60007CDA:                           ; CODE XREF: sub_60007BDE+F6â†‘j
 				pea     var_46(a6)
-				jsr     sub_60007A14
+				jsr     PlayWithNewNanoKernel
 				move.w  d0,d7
 				addq.w  #4,sp
 				tst.w   d7
@@ -17349,7 +17211,7 @@ loc_60007DA4:                           ; CODE XREF: sub_60007D2C+72â†‘j
 
 ; Attributes: bp-based frame
 
-sub_60007DC6:                           ; CODE XREF: sub_60007F70+21Câ†“p
+sub_60007DC6:                           ; CODE XREF: _InitLotsOfNativeManagers+21Câ†“p
 
 var_C           set -$C
 var_8           set -8
@@ -17451,7 +17313,7 @@ unk_60007E50:   dc.b  $F                ; DATA XREF: sub_60007DC6+Eâ†‘o
 
 ; Attributes: bp-based frame
 
-sub_60007E62:                           ; CODE XREF: sub_60007F70+3CCâ†“p
+sub_60007E62:                           ; CODE XREF: _InitLotsOfNativeManagers+3CCâ†“p
 
 var_11A         set -$11A
 var_10E         set -$10E
@@ -17547,7 +17409,7 @@ aMplibrary:     dc.b 9,'MPLibrary',0    ; DATA XREF: sub_60007E62+Eâ†‘o
 
 ; Attributes: bp-based frame
 
-sub_60007F0E:                           ; CODE XREF: sub_60007F70+2DAâ†“p
+sub_60007F0E:                           ; CODE XREF: _InitLotsOfNativeManagers+2DAâ†“p
 
 arg_0           set  8
 
@@ -17603,39 +17465,24 @@ loc_60007F60:                           ; CODE XREF: sub_60007F0E+3Aâ†‘j
 				rts
 ; End of function sub_60007F0E
 
+; ---------------------------------------------------------------------------
 
-; =============== S U B R O U T I N E =======================================
+j__LoadGoNative:                        ; CODE XREF: ROM:60000B8Aâ†‘p
+				bra.w   _LoadGoNative
+; ---------------------------------------------------------------------------
 
-; Attributes: thunk
+j_SetSplitOSGestalt:                    ; CODE XREF: ROM:60000A9Aâ†‘p
+				bra.w   SetSplitOSGestalt
+; ---------------------------------------------------------------------------
 
-sub_60007F64:                           ; CODE XREF: ROM:60000B8Aâ†‘p
-				bra.w   sub_6000B03C
-; End of function sub_60007F64
-
-
-; =============== S U B R O U T I N E =======================================
-
-; Attributes: thunk
-
-sub_60007F68:                           ; CODE XREF: ROM:60000A9Aâ†‘p
-				bra.w   sub_600099BC
-; End of function sub_60007F68
-
-
-; =============== S U B R O U T I N E =======================================
-
-; Attributes: thunk
-
-sub_60007F6C:                           ; CODE XREF: ROM:60000A96â†‘p
-				bra.w   sub_6000C686
-; End of function sub_60007F6C
-
+j_SpecialCaseOriginaliMac:              ; CODE XREF: ROM:60000A96â†‘p
+				bra.w   SpecialCaseOriginaliMac
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_60007F70:                           ; CODE XREF: ROM:60000410â†‘p
+_InitLotsOfNativeManagers:              ; CODE XREF: ROM:60000410â†‘p
 
 var_512         set -$512
 var_4FA         set -$4FA
@@ -17706,22 +17553,22 @@ arg_0           set  8
 				move.w  #$8000,var_DA(a6)
 				move.w  #6,var_DC(a6)
 				move.l  #$666F7672,var_E0(a6)
-				lea     unk_60008368,a0
+				lea     aPrivateinterfa,a0 ; "PrivateInterfaceLib"
 				lea     var_120(a6),a1
 				moveq   #4,d0
 
-loc_60007F9A:                           ; CODE XREF: sub_60007F70+2Câ†“j
+loc_60007F9A:                           ; CODE XREF: _InitLotsOfNativeManagers+2Câ†“j
 				move.l  (a0)+,(a1)+
 				dbf     d0,loc_60007F9A
 				move.b  (a0),(a1)
 				move.w  #$8000,var_122(a6)
 				move.w  #8,var_124(a6)
 				move.l  #$73667672,var_128(a6)
-				lea     unk_600083D4,a0
+				lea     aProcessmgrsupp,a0 ; "ProcessMgrSupport"
 				lea     var_168(a6),a1
 				moveq   #3,d0
 
-loc_60007FC0:                           ; CODE XREF: sub_60007F70+52â†“j
+loc_60007FC0:                           ; CODE XREF: _InitLotsOfNativeManagers+52â†“j
 				move.l  (a0)+,(a1)+
 				dbf     d0,loc_60007FC0
 				move.w  (a0)+,(a1)+
@@ -17729,7 +17576,7 @@ loc_60007FC0:                           ; CODE XREF: sub_60007F70+52â†“j
 				move.w  #$8000,var_16A(a6)
 				clr.w   var_16C(a6)
 				move.l  #$73667672,var_170(a6)
-				lea     unk_600083C2,a0
+				lea     aCodefragmentmg,a0 ; "CodeFragmentMgr"
 				lea     var_1B0(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17739,7 +17586,7 @@ loc_60007FC0:                           ; CODE XREF: sub_60007F70+52â†“j
 				move.w  #$8000,var_1B2(a6)
 				move.w  #$32,var_1B4(a6) ; '2'
 				move.l  #$666F7672,var_1B8(a6)
-				lea     unk_6000835A,a0
+				lea     aInterfacelib,a0 ; "InterfaceLib"
 				lea     var_1F8(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17768,7 +17615,7 @@ loc_60008042:
 				move.w  #$4000,var_28A(a6)
 				move.w  #3,var_28C(a6)
 				move.l  #$6E6C6962,var_290(a6)
-				lea     unk_60008398,a0
+				lea     aMpsharedglobal,a0 ; "MPSharedGlobals"
 				lea     var_2D0(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17778,7 +17625,7 @@ loc_60008042:
 				move.w  #$8000,var_2D2(a6)
 				move.w  #$33,var_2D4(a6) ; '3'
 				move.l  #$666F7672,var_2D8(a6)
-				lea     unk_6000835A,a0
+				lea     aInterfacelib,a0 ; "InterfaceLib"
 				lea     var_318(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17787,7 +17634,7 @@ loc_60008042:
 				move.w  #$8001,var_31A(a6)
 				move.w  #7,var_31C(a6)
 				move.l  #$6E6C6962,var_320(a6)
-				lea     unk_6000838A,a0
+				lea     aBootstdclib,a0 ; "BootStdCLib"
 				lea     var_360(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17796,7 +17643,7 @@ loc_60008042:
 				move.w  #$8001,var_362(a6)
 				move.w  #$BFDC,var_364(a6)
 				move.l  #$6E6C6962,var_368(a6)
-				lea     aMath64lib,a0   ; "\tMath64Lib"
+				lea     aMath64lib,a0   ; "Math64Lib"
 				lea     var_3A8(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17813,18 +17660,18 @@ loc_60008042:
 				move.w  #$8000,var_2(a6)
 				move.w  #6,var_4(a6)
 				move.l  #$666F7672,var_8(a6)
-				lea     unk_60008368,a0
+				lea     aPrivateinterfa,a0 ; "PrivateInterfaceLib"
 				lea     var_48(a6),a1
 				moveq   #4,d0
 
-loc_6000812C:                           ; CODE XREF: sub_60007F70+1BEâ†“j
+loc_6000812C:                           ; CODE XREF: _InitLotsOfNativeManagers+1BEâ†“j
 				move.l  (a0)+,(a1)+
 				dbf     d0,loc_6000812C
 				move.b  (a0),(a1)
 				move.w  #$8000,var_4A(a6)
 				move.w  #$32,var_4C(a6) ; '2'
 				move.l  #$666F7672,var_50(a6)
-				lea     unk_6000835A,a0
+				lea     aInterfacelib,a0 ; "InterfaceLib"
 				lea     var_90(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
@@ -17840,7 +17687,7 @@ loc_6000812C:                           ; CODE XREF: sub_60007F70+1BEâ†“j
 				move.w  (a0)+,(a1)+
 				clr.w   d6
 				subq.l  #2,sp
-				jsr     sub_600089EA
+				jsr     EmulatorIsOnDisk
 				move.b  (sp)+,d5
 				beq.s   loc_60008192
 				lea     var_D8(a6),a4
@@ -17849,16 +17696,16 @@ loc_6000812C:                           ; CODE XREF: sub_60007F70+1BEâ†“j
 				bra.s   loc_60008198
 ; ---------------------------------------------------------------------------
 
-loc_60008192:                           ; CODE XREF: sub_60007F70+214â†‘j
+loc_60008192:                           ; CODE XREF: _InitLotsOfNativeManagers+214â†‘j
 				lea     var_3F0(a6),a4
 				moveq   #$B,d5
 
-loc_60008198:                           ; CODE XREF: sub_60007F70+220â†‘j
+loc_60008198:                           ; CODE XREF: _InitLotsOfNativeManagers+220â†‘j
 				clr.w   d7
 				bra.w   loc_60008332
 ; ---------------------------------------------------------------------------
 
-loc_6000819E:                           ; CODE XREF: sub_60007F70+3C4â†“j
+loc_6000819E:                           ; CODE XREF: _InitLotsOfNativeManagers+3C4â†“j
 				ext.l   d7
 				move.l  d7,d0
 				move.l  d0,d1
@@ -17900,7 +17747,7 @@ loc_6000819E:                           ; CODE XREF: sub_60007F70+3C4â†“j
 				move.w  (sp)+,d6
 				beq.w   loc_6000832E
 
-loc_6000820A:                           ; CODE XREF: sub_60007F70+250â†‘j
+loc_6000820A:                           ; CODE XREF: _InitLotsOfNativeManagers+250â†‘j
 				ext.l   d7
 				move.l  d7,d0
 				move.l  d0,d1
@@ -17946,7 +17793,7 @@ loc_6000820A:                           ; CODE XREF: sub_60007F70+250â†‘j
 				bra.s   loc_600082DC
 ; ---------------------------------------------------------------------------
 
-loc_60008278:                           ; CODE XREF: sub_60007F70+2BCâ†‘j
+loc_60008278:                           ; CODE XREF: _InitLotsOfNativeManagers+2BCâ†‘j
 				ext.l   d7
 				move.l  d7,d0
 				move.l  d0,d1
@@ -17987,8 +17834,8 @@ loc_60008278:                           ; CODE XREF: sub_60007F70+2BCâ†‘j
 				jsr     sub_6000A66E
 				move.w  (sp)+,d6
 
-loc_600082DC:                           ; CODE XREF: sub_60007F70+306â†‘j
-				                        ; sub_60007F70+32Aâ†‘j
+loc_600082DC:                           ; CODE XREF: _InitLotsOfNativeManagers+306â†‘j
+				                        ; _InitLotsOfNativeManagers+32Aâ†‘j
 				tst.w   d6
 				beq.s   loc_6000832E
 				moveq   #0,d0
@@ -18022,152 +17869,68 @@ loc_600082DC:                           ; CODE XREF: sub_60007F70+306â†‘j
 				bra.s   loc_60008338
 ; ---------------------------------------------------------------------------
 
-loc_6000832E:                           ; CODE XREF: sub_60007F70+296â†‘j
-				                        ; sub_60007F70+36Eâ†‘j
+loc_6000832E:                           ; CODE XREF: _InitLotsOfNativeManagers+296â†‘j
+				                        ; _InitLotsOfNativeManagers+36Eâ†‘j
 				move.w  d7,d0
 				addq.w  #1,d7
 
-loc_60008332:                           ; CODE XREF: sub_60007F70+22Aâ†‘j
+loc_60008332:                           ; CODE XREF: _InitLotsOfNativeManagers+22Aâ†‘j
 				cmp.w   d7,d5
 				bgt.w   loc_6000819E
 
-loc_60008338:                           ; CODE XREF: sub_60007F70+37Aâ†‘j
-				                        ; sub_60007F70+390â†‘j ...
+loc_60008338:                           ; CODE XREF: _InitLotsOfNativeManagers+37Aâ†‘j
+				                        ; _InitLotsOfNativeManagers+390â†‘j ...
 				tst.w   d6
 				bne.s   loc_60008342
 				jsr     sub_60007E62
 				move.w  d0,d6
 
-loc_60008342:                           ; CODE XREF: sub_60007F70+3CAâ†‘j
+loc_60008342:                           ; CODE XREF: _InitLotsOfNativeManagers+3CAâ†‘j
 				move.w  d6,arg_0(a6)
 				movem.l var_512(a6),d3/d5-d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_60007F70
-
 ; ---------------------------------------------------------------------------
-aDebuglib:      dc.b 8,'DebugLib',0     ; DATA XREF: sub_60007F70+190â†‘o
-				                        ; sub_60007F70+1FCâ†‘o
-unk_6000835A:   dc.b  $C                ; DATA XREF: sub_60007F70+92â†‘o
-				                        ; sub_60007F70+124â†‘o ...
-				dc.b $49 ; I
-				dc.b $6E ; n
-				dc.b $74 ; t
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $66 ; f
-				dc.b $61 ; a
-				dc.b $63 ; c
-				dc.b $65 ; e
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aDebuglib:      dc.b 8,'DebugLib',0     ; DATA XREF: _InitLotsOfNativeManagers+190â†‘o
+				                        ; _InitLotsOfNativeManagers+1FCâ†‘o
+aInterfacelib:  dc.b 12,'InterfaceLib'  ; DATA XREF: _InitLotsOfNativeManagers+92â†‘o
+				                        ; _InitLotsOfNativeManagers+124â†‘o ...
 				dc.b   0
-unk_60008368:   dc.b $13                ; DATA XREF: sub_60007F70+20â†‘o
-				                        ; sub_60007F70+1B2â†‘o
-				dc.b $50 ; P
-				dc.b $72 ; r
-				dc.b $69 ; i
-				dc.b $76 ; v
-				dc.b $61 ; a
-				dc.b $74 ; t
-				dc.b $65 ; e
-				dc.b $49 ; I
-				dc.b $6E ; n
-				dc.b $74 ; t
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $66 ; f
-				dc.b $61 ; a
-				dc.b $63 ; c
-				dc.b $65 ; e
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aPrivateinterfa:dc.b 19,'PrivateInterfaceLib'
+				                        ; DATA XREF: _InitLotsOfNativeManagers+20â†‘o
+				                        ; _InitLotsOfNativeManagers+1B2â†‘o
 				dc.b   0
 				dc.b   0
-aMath64lib:     dc.b 9,'Math64Lib',0    ; DATA XREF: sub_60007F70+16Câ†‘o
-				dc.b   0
-unk_6000838A:   dc.b  $B                ; DATA XREF: sub_60007F70+148â†‘o
-				dc.b $42 ; B
-				dc.b $6F ; o
-				dc.b $6F ; o
-				dc.b $74 ; t
-				dc.b $53 ; S
-				dc.b $74 ; t
-				dc.b $64 ; d
-				dc.b $43 ; C
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aMath64lib:     dc.b 9,'Math64Lib'      ; DATA XREF: _InitLotsOfNativeManagers+16Câ†‘o
 				dc.b   0
 				dc.b   0
-unk_60008398:   dc.b  $F                ; DATA XREF: sub_60007F70+FEâ†‘o
-				dc.b $4D ; M
-				dc.b $50 ; P
-				dc.b $53 ; S
-				dc.b $68 ; h
-				dc.b $61 ; a
-				dc.b $72 ; r
-				dc.b $65 ; e
-				dc.b $64 ; d
-				dc.b $47 ; G
-				dc.b $6C ; l
-				dc.b $6F ; o
-				dc.b $62 ; b
-				dc.b $61 ; a
-				dc.b $6C ; l
-				dc.b $73 ; s
+aBootstdclib:   dc.b 11,'BootStdCLib'   ; DATA XREF: _InitLotsOfNativeManagers+148â†‘o
 				dc.b   0
 				dc.b   0
-aMplibrary_0:   dc.b 9,'MPLibrary',0    ; DATA XREF: sub_60007F70+DAâ†‘o
-				dc.b   0
-aMixedmode:     dc.b 9,'MixedMode',0    ; DATA XREF: sub_60007F70+B6â†‘o
-				dc.b   0
-unk_600083C2:   dc.b  $F                ; DATA XREF: sub_60007F70+6Câ†‘o
-				dc.b $43 ; C
-				dc.b $6F ; o
-				dc.b $64 ; d
-				dc.b $65 ; e
-				dc.b $46 ; F
-				dc.b $72 ; r
-				dc.b $61 ; a
-				dc.b $67 ; g
-				dc.b $6D ; m
-				dc.b $65 ; e
-				dc.b $6E ; n
-				dc.b $74 ; t
-				dc.b $4D ; M
-				dc.b $67 ; g
-				dc.b $72 ; r
+aMpsharedglobal:dc.b 15,'MPSharedGlobals'
+				                        ; DATA XREF: _InitLotsOfNativeManagers+FEâ†‘o
 				dc.b   0
 				dc.b   0
-unk_600083D4:   dc.b $11                ; DATA XREF: sub_60007F70+46â†‘o
-				dc.b $50 ; P
-				dc.b $72 ; r
-				dc.b $6F ; o
-				dc.b $63 ; c
-				dc.b $65 ; e
-				dc.b $73 ; s
-				dc.b $73 ; s
-				dc.b $4D ; M
-				dc.b $67 ; g
-				dc.b $72 ; r
-				dc.b $53 ; S
-				dc.b $75 ; u
-				dc.b $70 ; p
-				dc.b $70 ; p
-				dc.b $6F ; o
-				dc.b $72 ; r
-				dc.b $74 ; t
+aMplibrary_0:   dc.b 9,'MPLibrary',0    ; DATA XREF: _InitLotsOfNativeManagers+DAâ†‘o
+				dc.b   0
+aMixedmode:     dc.b 9,'MixedMode',0    ; DATA XREF: _InitLotsOfNativeManagers+B6â†‘o
+				dc.b   0
+aCodefragmentmg:dc.b 15,'CodeFragmentMgr'
+				                        ; DATA XREF: _InitLotsOfNativeManagers+6Câ†‘o
 				dc.b   0
 				dc.b   0
+aProcessmgrsupp:dc.b 17,'ProcessMgrSupport'
+				                        ; DATA XREF: _InitLotsOfNativeManagers+46â†‘o
+				dc.b   0
+				dc.b   0
+; End of function _InitLotsOfNativeManagers
+
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_600083E8:                           ; CODE XREF: ROM:loc_60000598â†‘p
+_LoadTimeManagerLib:                    ; CODE XREF: ROM:loc_60000598â†‘p
 
 var_114         set -$114
 var_108         set -$108
@@ -18185,8 +17948,8 @@ var_100         set -$100
 				movea.l (sp)+,a0
 				dc.w    $A01B ; _SetZone
 				subq.l  #2,sp
-				pea     unk_60008462
-				move.l  #$70777063,-(sp)
+				pea     aTimemanagerlib ; "TimeManagerLib"
+				move.l  #'pwpc',-(sp)
 				moveq   #2,d0
 				move.l  d0,-(sp)
 				pea     var_108(a6)
@@ -18218,29 +17981,16 @@ var_100         set -$100
 				moveq   #1,d0
 				dc.w    $AA59 ; _MixedModeDispatch
 
-loc_60008458:                           ; CODE XREF: sub_600083E8+46â†‘j
-				                        ; sub_600083E8+4Câ†‘j ...
+loc_60008458:                           ; CODE XREF: _LoadTimeManagerLib+46â†‘j
+				                        ; _LoadTimeManagerLib+4Câ†‘j ...
 				movem.l var_114(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_600083E8
+; End of function _LoadTimeManagerLib
 
 ; ---------------------------------------------------------------------------
-unk_60008462:   dc.b  $E                ; DATA XREF: sub_600083E8+1Eâ†‘o
-				dc.b $54 ; T
-				dc.b $69 ; i
-				dc.b $6D ; m
-				dc.b $65 ; e
-				dc.b $4D ; M
-				dc.b $61 ; a
-				dc.b $6E ; n
-				dc.b $61 ; a
-				dc.b $67 ; g
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aTimemanagerlib:dc.b 14,'TimeManagerLib'
+				                        ; DATA XREF: _LoadTimeManagerLib+1Eâ†‘o
 				dc.b   0
 
 ; =============== S U B R O U T I N E =======================================
@@ -18868,42 +18618,42 @@ aDevicesDeviceT_0:dc.b 'Devices:device-tree:rom:macos',0
 
 ; Attributes: bp-based frame
 
-sub_600089EA:                           ; CODE XREF: sub_60007910â†‘j
-				                        ; sub_60007F70+20Eâ†‘p ...
+EmulatorIsOnDisk:                       ; CODE XREF: ROM:j_EmulatorIsOnDiskâ†‘j
+				                        ; _InitLotsOfNativeManagers+20Eâ†‘p ...
 
 var_4           set -4
 arg_0           set  8
 
 				link    a6,#-4
-				move.l  #$6D616368,d0
+				move.l  #'mach',d0
 				lea     var_4(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
 				move.l  a0,(a1)
 				tst.w   d0
-				bne.s   loc_60008A26
+				bne.s   @notBlueBox
 				cmpi.l  #$196,var_4(a6)
-				bne.s   loc_60008A14
+				bne.s   @notNewWorld
 				move.b  #1,arg_0(a6)
-				bra.s   loc_60008A2A
+				bra.s   @return
 ; ---------------------------------------------------------------------------
 
-loc_60008A14:                           ; CODE XREF: sub_600089EA+20â†‘j
+@notNewWorld:                           ; CODE XREF: EmulatorIsOnDisk+20â†‘j
 				cmpi.l  #$4B6,var_4(a6)
-				bne.s   loc_60008A26
+				bne.s   @notBlueBox
 				move.b  #1,arg_0(a6)
-				bra.s   loc_60008A2A
+				bra.s   @return
 ; ---------------------------------------------------------------------------
 
-loc_60008A26:                           ; CODE XREF: sub_600089EA+16â†‘j
-				                        ; sub_600089EA+32â†‘j
+@notBlueBox:                            ; CODE XREF: EmulatorIsOnDisk+16â†‘j
+				                        ; EmulatorIsOnDisk+32â†‘j
 				clr.b   arg_0(a6)
 
-loc_60008A2A:                           ; CODE XREF: sub_600089EA+28â†‘j
-				                        ; sub_600089EA+3Aâ†‘j
+@return:                                ; CODE XREF: EmulatorIsOnDisk+28â†‘j
+				                        ; EmulatorIsOnDisk+3Aâ†‘j
 				unlk    a6
 				rts
-; End of function sub_600089EA
+; End of function EmulatorIsOnDisk
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -18920,7 +18670,7 @@ var_4           set -4
 				moveq   #0,d0
 				move.l  d0,var_4(a6)
 				subq.l  #2,sp
-				jsr     sub_600089EA
+				jsr     EmulatorIsOnDisk
 				tst.b   (sp)+
 				beq.s   loc_60008A92
 				pea     var_4(a6)
@@ -19021,7 +18771,7 @@ loc_60008AE4:                           ; CODE XREF: sub_60008A9A+28â†‘j
 
 ; Attributes: bp-based frame
 
-sub_60008AF4:                           ; CODE XREF: ROM:loc_60001716â†‘p
+_RemoveAlisToUninitializedPAPA:         ; CODE XREF: ROM:loc_60001716â†‘p
 
 var_68          set -$68
 var_48          set -$48
@@ -19069,7 +18819,7 @@ var_1           set -1
 				dc.w    $A823 ; _AliasDispatch
 				move.w  (sp)+,d6
 
-loc_60008B58:                           ; CODE XREF: sub_60008AF4+4Câ†‘j
+loc_60008B58:                           ; CODE XREF: _RemoveAlisToUninitializedPAPA+4Câ†‘j
 				tst.w   d6
 				bne.w   loc_60008BFA
 				subq.l  #2,sp
@@ -19136,33 +18886,33 @@ loc_60008B58:                           ; CODE XREF: sub_60008AF4+4Câ†‘j
 				move.w  d0,-(sp)
 				dc.w    $A999 ; _UpdateResFile
 
-loc_60008BEE:                           ; CODE XREF: sub_60008AF4+D6â†‘j
-				                        ; sub_60008AF4+DAâ†‘j ...
+loc_60008BEE:                           ; CODE XREF: _RemoveAlisToUninitializedPAPA+D6â†‘j
+				                        ; _RemoveAlisToUninitializedPAPA+DAâ†‘j ...
 				movea.l a4,a0
 				dc.w    $A02A ; _HUnlock
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_60008BF6:                           ; CODE XREF: sub_60008AF4+94â†‘j
-				                        ; sub_60008AF4+9Câ†‘j
+loc_60008BF6:                           ; CODE XREF: _RemoveAlisToUninitializedPAPA+94â†‘j
+				                        ; _RemoveAlisToUninitializedPAPA+9Câ†‘j
 				move.w  d5,-(sp)
 				dc.w    $A99A ; _CloseResFile
 
-loc_60008BFA:                           ; CODE XREF: sub_60008AF4+34â†‘j
-				                        ; sub_60008AF4+3Eâ†‘j ...
+loc_60008BFA:                           ; CODE XREF: _RemoveAlisToUninitializedPAPA+34â†‘j
+				                        ; _RemoveAlisToUninitializedPAPA+3Eâ†‘j ...
 				move.w  d4,-(sp)
 				dc.w    $A998 ; _UseResFile
 				movem.l var_68(a6),d4-d7/a2-a4
 				unlk    a6
 				rts
-; End of function sub_60008AF4
+; End of function _RemoveAlisToUninitializedPAPA
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_60008C08:                           ; CODE XREF: ROM:loc_60001116â†‘p
+_InstallOFDiskNameMaker:                ; CODE XREF: ROM:loc_60001116â†‘p
 
 var_8           set -8
 
@@ -19173,7 +18923,7 @@ var_8           set -8
 				movea.l ($2A6).w,a0
 				dc.w    $A01B ; _SetZone
 				subq.l  #4,sp
-				move.l  #$73636F64,-(sp)
+				move.l  #'scod',-(sp)
 				move.w  #$AD08,-(sp)
 				dc.w    $A81F ; _Get1Resource
 				movea.l (sp)+,a4
@@ -19191,13 +18941,13 @@ var_8           set -8
 				move.w  #3,-(sp)
 				dc.w    $A895 ; _ShutDown
 
-loc_60008C46:                           ; CODE XREF: sub_60008C08+24â†‘j
+loc_60008C46:                           ; CODE XREF: _InstallOFDiskNameMaker+24â†‘j
 				movea.l a3,a0
 				dc.w    $A01B ; _SetZone
 				movem.l var_8(a6),a3-a4
 				unlk    a6
 				rts
-; End of function sub_60008C08
+; End of function _InstallOFDiskNameMaker
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -20019,7 +19769,7 @@ var_4           set -4
 
 loc_60009286:                           ; CODE XREF: sub_60009278+D8â†“j
 				subq.l  #4,sp
-				move.l  #$64697366,-(sp)
+				move.l  #'disf',-(sp)
 				move.w  d7,-(sp)
 				dc.w    $A99D ; _GetIndResource
 				movea.l (sp)+,a4
@@ -20029,7 +19779,7 @@ loc_60009286:                           ; CODE XREF: sub_60009278+D8â†“j
 				beq.w   loc_60009340
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$6578746E,-(sp)
+				move.l  #'extn',-(sp)
 				moveq   #0,d0
 				move.b  d0,-(sp)
 				pea     var_6(a6)
@@ -20040,14 +19790,14 @@ loc_60009286:                           ; CODE XREF: sub_60009278+D8â†“j
 				bne.s   loc_600092D4
 				move.w  var_6(a6),-(sp)
 				move.l  var_4(a6),-(sp)
-				move.l  #$65787444,-(sp)
+				move.l  #'extD',-(sp)
 				move.l  a4,-(sp)
 				jsr     sub_6000905A
 
 loc_600092D4:                           ; CODE XREF: sub_60009278+46â†‘j
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$6374726C,-(sp)
+				move.l  #'ctrl',-(sp)
 				moveq   #0,d0
 				move.b  d0,-(sp)
 				pea     var_6(a6)
@@ -20065,7 +19815,7 @@ loc_600092D4:                           ; CODE XREF: sub_60009278+46â†‘j
 loc_60009308:                           ; CODE XREF: sub_60009278+7Aâ†‘j
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$6D616373,-(sp)
+				move.l  #'macs',-(sp)
 				moveq   #0,d0
 				move.b  d0,-(sp)
 				pea     var_6(a6)
@@ -20076,7 +19826,7 @@ loc_60009308:                           ; CODE XREF: sub_60009278+7Aâ†‘j
 				bne.s   loc_6000933C
 				move.w  var_6(a6),-(sp)
 				move.l  var_4(a6),-(sp)
-				move.l  #$6D616344,-(sp)
+				move.l  #'macD',-(sp)
 				move.l  a4,-(sp)
 				jsr     sub_6000905A
 
@@ -20091,7 +19841,7 @@ loc_60009340:                           ; CODE XREF: sub_60009278+1Eâ†‘j
 
 loc_60009344:                           ; CODE XREF: sub_60009278+Aâ†‘j
 				subq.l  #2,sp
-				move.l  #$64697366,-(sp)
+				move.l  #'disf',-(sp)
 				dc.w    $A99C ; _CountResources
 				cmp.w   (sp)+,d7
 				ble.w   loc_60009286
@@ -20105,7 +19855,7 @@ loc_60009344:                           ; CODE XREF: sub_60009278+Aâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000935E:                           ; CODE XREF: ROM:6000044Câ†‘p
+_ReplaceBridgeVideoDriver:              ; CODE XREF: ROM:6000044Câ†‘p
 
 var_116         set -$116
 var_10A         set -$10A
@@ -20116,7 +19866,7 @@ var_100         set -$100
 				link    a6,#-$10A
 				movem.l d7/a3-a4,-(sp)
 				subq.l  #4,sp
-				move.l  #$636F6662,-(sp)
+				move.l  #'cofb',-(sp)
 				move.w  #$B1BE,-(sp)
 				dc.w    $A9A0 ; _GetResource
 				movea.l (sp)+,a4
@@ -20157,7 +19907,7 @@ var_100         set -$100
 				bne.s   loc_600093EC
 				subq.l  #2,sp
 				move.l  var_104(a6),-(sp)
-				pea     unk_60009402
+				pea     aReplacebridgev_0 ; "ReplaceBridgeVideoDriver"
 				pea     var_10A(a6)
 				pea     var_105(a6)
 				move.w  #5,-(sp)
@@ -20167,14 +19917,14 @@ var_100         set -$100
 				movea.l var_10A(a6),a0
 				jsr     (a0)
 
-loc_600093DE:                           ; CODE XREF: sub_6000935E+78â†‘j
+loc_600093DE:                           ; CODE XREF: _ReplaceBridgeVideoDriver+78â†‘j
 				subq.l  #2,sp
 				pea     var_104(a6)
 				move.w  #4,-(sp)
 				dc.w    $AA5A ; _CodeFragmentDispatch
 				addq.w  #2,sp
 
-loc_600093EC:                           ; CODE XREF: sub_6000935E+5Câ†‘j
+loc_600093EC:                           ; CODE XREF: _ReplaceBridgeVideoDriver+5Câ†‘j
 				movea.l a4,a0
 				dc.w    $A02A ; _HUnlock
 				movea.l a4,a0
@@ -20182,48 +19932,25 @@ loc_600093EC:                           ; CODE XREF: sub_6000935E+5Câ†‘j
 				movea.l a3,a0
 				dc.w    $A01B ; _SetZone
 
-loc_600093F8:                           ; CODE XREF: sub_6000935E+1Aâ†‘j
+loc_600093F8:                           ; CODE XREF: _ReplaceBridgeVideoDriver+1Aâ†‘j
 				movem.l var_116(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000935E
+; End of function _ReplaceBridgeVideoDriver
 
 ; ---------------------------------------------------------------------------
-unk_60009402:   dc.b $18                ; DATA XREF: sub_6000935E+64â†‘o
-				dc.b $52 ; R
-				dc.b $65 ; e
-				dc.b $70 ; p
-				dc.b $6C ; l
-				dc.b $61 ; a
-				dc.b $63 ; c
-				dc.b $65 ; e
-				dc.b $42 ; B
-				dc.b $72 ; r
-				dc.b $69 ; i
-				dc.b $64 ; d
-				dc.b $67 ; g
-				dc.b $65 ; e
-				dc.b $56 ; V
-				dc.b $69 ; i
-				dc.b $64 ; d
-				dc.b $65 ; e
-				dc.b $6F ; o
-				dc.b $44 ; D
-				dc.b $72 ; r
-				dc.b $69 ; i
-				dc.b $76 ; v
-				dc.b $65 ; e
-				dc.b $72 ; r
+aReplacebridgev_0:dc.b 24,'ReplaceBridgeVideoDriver'
+				                        ; DATA XREF: _ReplaceBridgeVideoDriver+64â†‘o
 				dc.b   0
 aReplacebridgev:dc.b $1B,'ReplaceBridgeVideoDriverLib',0
-				                        ; DATA XREF: sub_6000935E+40â†‘o
+				                        ; DATA XREF: _ReplaceBridgeVideoDriver+40â†‘o
 				dc.b   0
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000943A:                           ; CODE XREF: sub_60007BDAâ†‘j
+DisableEDiskIfNotEnoughRAM:             ; CODE XREF: ROM:j_DisableEDiskIfNotEnoughRAMâ†‘j
 
 var_1A          set -$1A
 var_E           set -$E
@@ -20235,7 +19962,7 @@ var_1           set -1
 				movem.l d7/a3-a4,-(sp)
 				moveq   #0,d0
 				movea.l d0,a4
-				move.l  #$72616D20,d0
+				move.l  #'ram ',d0
 				lea     var_A(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -20257,7 +19984,7 @@ var_1           set -1
 				asr.l   #8,d1
 				jsr     sub_6000D786
 				sub.l   d0,var_A(a6)
-				move.l  #$7272706D,d0
+				move.l  #'rrpm',d0
 				lea     var_E(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -20266,7 +19993,7 @@ var_1           set -1
 				beq.s   loc_600094CE
 				moveq   #0,d0
 				move.l  d0,var_E(a6)
-				move.l  #$6D616368,d0
+				move.l  #'mach',d0
 				lea     var_6(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -20277,10 +20004,10 @@ var_1           set -1
 				bne.s   loc_600094CE
 				move.l  #$400000,var_E(a6)
 
-loc_600094CE:                           ; CODE XREF: sub_6000943A+66â†‘j
-				                        ; sub_6000943A+80â†‘j ...
+loc_600094CE:                           ; CODE XREF: DisableEDiskIfNotEnoughRAM+66â†‘j
+				                        ; DisableEDiskIfNotEnoughRAM+80â†‘j ...
 				subq.l  #4,sp
-				move.l  #$6D6E726D,-(sp)
+				move.l  #'mnrm',-(sp)
 				moveq   #0,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -20288,7 +20015,7 @@ loc_600094CE:                           ; CODE XREF: sub_6000943A+66â†‘j
 				move.l  a4,d0
 				beq.s   loc_60009534
 				movea.l (a4),a3
-				move.l  #$766D2020,d0
+				move.l  #'vm  ',d0
 				lea     var_6(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -20303,12 +20030,12 @@ loc_600094CE:                           ; CODE XREF: sub_6000943A+66â†‘j
 				bra.s   loc_60009510
 ; ---------------------------------------------------------------------------
 
-loc_60009508:                           ; CODE XREF: sub_6000943A+BCâ†‘j
-				                        ; sub_6000943A+C4â†‘j
+loc_60009508:                           ; CODE XREF: DisableEDiskIfNotEnoughRAM+BCâ†‘j
+				                        ; DisableEDiskIfNotEnoughRAM+C4â†‘j
 				move.l  $C(a3),d0
 				add.l   d0,var_E(a6)
 
-loc_60009510:                           ; CODE XREF: sub_6000943A+CCâ†‘j
+loc_60009510:                           ; CODE XREF: DisableEDiskIfNotEnoughRAM+CCâ†‘j
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 				moveq   #0,d0
@@ -20323,12 +20050,12 @@ loc_60009510:                           ; CODE XREF: sub_6000943A+CCâ†‘j
 				moveq   #$7A,d0 ; 'z'
 				dc.w    $A9C9 ; _SysError
 
-loc_60009534:                           ; CODE XREF: sub_6000943A+1Eâ†‘j
-				                        ; sub_6000943A+30â†‘j ...
+loc_60009534:                           ; CODE XREF: DisableEDiskIfNotEnoughRAM+1Eâ†‘j
+				                        ; DisableEDiskIfNotEnoughRAM+30â†‘j ...
 				movem.l var_1A(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000943A
+; End of function DisableEDiskIfNotEnoughRAM
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -20606,7 +20333,7 @@ loc_600096FE:                           ; CODE XREF: sub_600095D4+38â†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000970E:                           ; CODE XREF: ROM:60000992â†‘p
+GetSysVersion:                          ; CODE XREF: ROM:60000992â†‘p
 
 var_10          set -$10
 var_8           set -8
@@ -20616,7 +20343,7 @@ arg_0           set  8
 				link    a6,#-8
 				movem.l d7/a4,-(sp)
 				subq.l  #4,sp
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -20628,12 +20355,12 @@ arg_0           set  8
 				bra.s   loc_60009786
 ; ---------------------------------------------------------------------------
 
-loc_60009732:                           ; CODE XREF: sub_6000970E+1Aâ†‘j
+loc_60009732:                           ; CODE XREF: GetSysVersion+1Aâ†‘j
 				movea.l (a4),a0
 				move.l  (a0),var_8(a6)
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
-				move.l  #$62626F78,d0
+				move.l  #'bbox',d0
 				lea     var_4(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -20646,7 +20373,7 @@ loc_60009732:                           ; CODE XREF: sub_6000970E+1Aâ†‘j
 				move.w  ($A5A).w,d7
 				move.w  ($A58).w,($A5A).w
 				subq.l  #4,sp
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				dc.w    $A81F ; _Get1Resource
@@ -20656,18 +20383,18 @@ loc_60009732:                           ; CODE XREF: sub_6000970E+1Aâ†‘j
 				movea.l (a4),a0
 				move.l  (a0),var_8(a6)
 
-loc_6000977C:                           ; CODE XREF: sub_6000970E+66â†‘j
+loc_6000977C:                           ; CODE XREF: GetSysVersion+66â†‘j
 				move.w  d7,($A5A).w
 
-loc_60009780:                           ; CODE XREF: sub_6000970E+40â†‘j
-				                        ; sub_6000970E+48â†‘j
+loc_60009780:                           ; CODE XREF: GetSysVersion+40â†‘j
+				                        ; GetSysVersion+48â†‘j
 				move.l  var_8(a6),arg_0(a6)
 
-loc_60009786:                           ; CODE XREF: sub_6000970E+22â†‘j
+loc_60009786:                           ; CODE XREF: GetSysVersion+22â†‘j
 				movem.l var_10(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_6000970E
+; End of function GetSysVersion
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -20720,7 +20447,7 @@ loc_600097DA:                           ; CODE XREF: sub_60009790+1Aâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_600097E4:                           ; CODE XREF: sub_600099BC+22â†“p
+sub_600097E4:                           ; CODE XREF: SetSplitOSGestalt+22â†“p
 
 var_C           set -$C
 arg_0           set  8
@@ -20785,7 +20512,7 @@ loc_60009840:                           ; CODE XREF: sub_600097E4+1Aâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_60009850:                           ; CODE XREF: sub_600099BC+Câ†“p
+sub_60009850:                           ; CODE XREF: SetSplitOSGestalt+Câ†“p
 
 var_17E         set -$17E
 var_16A         set -$16A
@@ -20965,7 +20692,7 @@ unk_600099AA:   dc.b  $F                ; DATA XREF: sub_60009850+30â†‘o
 
 ; Attributes: bp-based frame
 
-sub_600099BC:                           ; CODE XREF: sub_60007F68â†‘j
+SetSplitOSGestalt:                      ; CODE XREF: ROM:j_SetSplitOSGestaltâ†‘j
 
 var_28          set -$28
 var_24          set -$24
@@ -20990,7 +20717,7 @@ var_20          set -$20
 				beq.s   loc_60009A30
 				moveq   #0,d0
 				move.l  d0,var_24(a6)
-				move.l  #$73706F73,d0
+				move.l  #'spos',d0
 				lea     var_24(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -20998,31 +20725,43 @@ var_20          set -$20
 				tst.w   d0
 				beq.s   loc_60009A14
 				subq.l  #2,sp
-				move.l  #$73706F73,-(sp)
+				move.l  #'spos',-(sp)
 				move.l  var_24(a6),-(sp)
 				move.w  #$401,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
 				addq.w  #2,sp
 
-loc_60009A14:                           ; CODE XREF: sub_600099BC+42â†‘j
+loc_60009A14:                           ; CODE XREF: SetSplitOSGestalt+42â†‘j
 				ori.l   #8,var_24(a6)
 				subq.l  #2,sp
-				move.l  #$73706F73,-(sp)
+				move.l  #'spos',-(sp)
 				move.l  var_24(a6),-(sp)
 				move.w  #$402,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
 				addq.w  #2,sp
 
-loc_60009A30:                           ; CODE XREF: sub_600099BC+14â†‘j
-				                        ; sub_600099BC+1Câ†‘j ...
+loc_60009A30:                           ; CODE XREF: SetSplitOSGestalt+14â†‘j
+				                        ; SetSplitOSGestalt+1Câ†‘j ...
 				movea.l var_28(a6),a4
 				unlk    a6
 				rts
-; End of function sub_600099BC
+; End of function SetSplitOSGestalt
 
-; ---------------------------------------------------------------------------
 
-loc_60009A38:                           ; CODE XREF: sub_60007914â†‘j
+; =============== S U B R O U T I N E =======================================
+
+; Attributes: bp-based frame
+
+_LoadMultitaskingNanoKernel:            ; CODE XREF: ROM:j__LoadMultitaskingNanoKernelâ†‘j
+
+var_3C          set -$3C
+arg_B0          set  $B8
+arg_D0          set  $D8
+arg_D8          set  $E0
+arg_E0          set  $E8
+arg_E8          set  $F0
+arg_F0          set  $F8
+
 				link    a6,#0
 				movem.l d0-d7/a0-a3,-(sp)
 				move.l  #'bbox',d0
@@ -21032,7 +20771,7 @@ loc_60009A38:                           ; CODE XREF: sub_60007914â†‘j
 				btst    #0,d0
 				bne.w   loc_60009BB6
 
-loc_60009A56:                           ; CODE XREF: ROM:60009A48â†‘j
+loc_60009A56:                           ; CODE XREF: _LoadMultitaskingNanoKernel+10â†‘j
 				subq.w  #4,sp
 				move.l  #'krnl',-(sp)
 				clr.w   -(sp)
@@ -21061,7 +20800,7 @@ loc_60009A56:                           ; CODE XREF: ROM:60009A48â†‘j
 				blt.s   loc_60009AAA
 				clr.w   d5
 
-loc_60009AAA:                           ; CODE XREF: ROM:60009AA6â†‘j
+loc_60009AAA:                           ; CODE XREF: _LoadMultitaskingNanoKernel+6Eâ†‘j
 				ext.l   d5
 				move.l  ($108).w,d0
 				lsr.l   #8,d0
@@ -21085,218 +20824,117 @@ loc_60009AAA:                           ; CODE XREF: ROM:60009AA6â†‘j
 ; ---------------------------------------------------------------------------
 				dc.b $A0
 				dc.b $5C ; \
-				dc.b $4A ; J
-				dc.b $40 ; @
-				dc.b $66 ; f
-				dc.b   0
-				dc.b   0
-				dc.b $EC
-				dc.b $59 ; Y
-				dc.b $4F ; O
-				dc.b $2F ; /
-				dc.b $3C ; <
-				dc.b $6B ; k
-				dc.b $72 ; r
-				dc.b $6E ; n
-				dc.b $6C ; l
-				dc.b $42 ; B
-				dc.b $67 ; g
-				dc.b $A9
-				dc.b $A0
-				dc.b $26 ; &
-				dc.b $5F ; _
-				dc.b $20
-				dc.b  $B
-				dc.b $67 ; g
-				dc.b   0
-				dc.b   0
-				dc.b $DE
-				dc.b $20
-				dc.b   7
-				dc.b $20
-				dc.b $53 ; S
-				dc.b $22 ; "
-				dc.b $4A ; J
-				dc.b $A2
-				dc.b $2E ; .
-				dc.b $20
-				dc.b $4A ; J
-				dc.b $20
-				dc.b   7
+; ---------------------------------------------------------------------------
+				tst.w   d0
+				bne.w   loc_60009BD6
+				subq.w  #4,sp
+				move.l  #$6B726E6C,-(sp)
+				clr.w   -(sp)
+				dc.w    $A9A0 ; _GetResource
+				movea.l (sp)+,a3
+				move.l  a3,d0
+				beq.w   loc_60009BDC
+				move.l  d7,d0
+				movea.l (a3),a0
+				movea.l a2,a1
+				dc.w    $A22E ; _BlockMoveData
+				movea.l a2,a0
+				move.l  d7,d0
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $C
-				dc.b $4E ; N
-				dc.b $71 ; q
-				dc.b $20
-				dc.b $4A ; J
-				dc.b $20
-				dc.b   7
+; ---------------------------------------------------------------------------
+				nop
+				movea.l a2,a0
+				move.l  d7,d0
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $B
-				dc.b $4E ; N
-				dc.b $71 ; q
-				dc.b $20
-				dc.b $4F ; O
-				dc.b $20
-				dc.b  $F
-				dc.b   2
-				dc.b $40 ; @
-				dc.b $FC
-				dc.b   0
-				dc.b $2E ; .
-				dc.b $40 ; @
-				dc.b $30 ; 0
-				dc.b $3C ; <
-				dc.b   0
-				dc.b $BF
-				dc.b $42 ; B
-				dc.b $A7
-				dc.b $51 ; Q
-				dc.b $C8
-				dc.b $FF
-				dc.b $FC
-				dc.b $2F ; /
-				dc.b $48 ; H
-				dc.b   0
-				dc.b   8
-				dc.b $20
-				dc.b  $A
-				dc.b $2F ; /
-				dc.b $4A ; J
-				dc.b   0
-				dc.b $FC
-				dc.b $E0
-				dc.b $88
-				dc.b $E8
-				dc.b $88
-				dc.b $20
-				dc.b $40 ; @
-				dc.b $70 ; p
-				dc.b  $A
+; ---------------------------------------------------------------------------
+				nop
+				movea.l sp,a0
+				move.l  sp,d0
+				andi.w  #$FC00,d0
+				movea.l d0,sp
+				move.w  #$BF,d0
+
+loc_60009B26:                           ; CODE XREF: _LoadMultitaskingNanoKernel+F0â†“j
+				clr.l   -(sp)
+				dbf     d0,loc_60009B26
+				move.l  a0,$44+var_3C(sp)
+				move.l  a2,d0
+				move.l  a2,$44+arg_B0(sp)
+				lsr.l   #8,d0
+				lsr.l   #4,d0
+				movea.l d0,a0
+				moveq   #$A,d0
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $A
-				dc.b $E1
-				dc.b $88
-				dc.b $E9
-				dc.b $88
-				dc.b $2F ; /
-				dc.b $40 ; @
-				dc.b   1
-				dc.b $1C
-				dc.b $20
-				dc.b  $A
-				dc.b $D0
-				dc.b $87
-				dc.b $E0
-				dc.b $88
-				dc.b $E8
-				dc.b $88
-				dc.b $20
-				dc.b $40 ; @
-				dc.b $70 ; p
-				dc.b  $A
+; ---------------------------------------------------------------------------
+				lsl.l   #8,d0
+				lsl.l   #4,d0
+				move.l  d0,$44+arg_D0(sp)
+				move.l  a2,d0
+				add.l   d7,d0
+				lsr.l   #8,d0
+				lsr.l   #4,d0
+				movea.l d0,a0
+				moveq   #$A,d0
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $A
-				dc.b $E1
-				dc.b $88
-				dc.b $E9
-				dc.b $88
-				dc.b $2F ; /
-				dc.b $40 ; @
-				dc.b   1
-				dc.b $24 ; $
-				dc.b $20
-				dc.b  $A
-				dc.b $D0
-				dc.b $86
-				dc.b $E0
-				dc.b $88
-				dc.b $E8
-				dc.b $88
-				dc.b $53 ; S
-				dc.b $80
-				dc.b $20
-				dc.b $40 ; @
-				dc.b $70 ; p
-				dc.b  $A
+; ---------------------------------------------------------------------------
+				lsl.l   #8,d0
+				lsl.l   #4,d0
+				move.l  d0,$44+arg_D8(sp)
+				move.l  a2,d0
+				add.l   d6,d0
+				lsr.l   #8,d0
+				lsr.l   #4,d0
+				subq.l  #1,d0
+				movea.l d0,a0
+				moveq   #$A,d0
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $A
-				dc.b $E1
-				dc.b $88
-				dc.b $E9
-				dc.b $88
-				dc.b $2F ; /
-				dc.b $40 ; @
-				dc.b   1
-				dc.b $34 ; 4
-				dc.b $20
-				dc.b $78 ; x
-				dc.b   2
-				dc.b $AE
-				dc.b $70 ; p
-				dc.b   0
-				dc.b $30 ; 0
-				dc.b $28 ; (
-				dc.b   0
-				dc.b $12
-				dc.b $2F ; /
-				dc.b $40 ; @
-				dc.b   1
-				dc.b $3C ; <
-				dc.b $20
-				dc.b $38 ; 8
-				dc.b   1
-				dc.b $D8
-				dc.b $2F ; /
-				dc.b $40 ; @
-				dc.b   1
-				dc.b $2C ; ,
-				dc.b $4C ; L
-				dc.b $F8
-				dc.b   0
-				dc.b  $F
-				dc.b   1
-				dc.b $74 ; t
-				dc.b $80
-				dc.b $82
-				dc.b $80
-				dc.b $83
-				dc.b $66 ; f
-				dc.b   8
-				dc.b  $C
-				dc.b $81
-				dc.b   0
-				dc.b   0
-				dc.b   8
-				dc.b   0
-				dc.b $67 ; g
-				dc.b  $E
-				dc.b $4E ; N
-				dc.b $BA
-				dc.b   0
-				dc.b $86
-				dc.b $66 ; f
-				dc.b   0
-				dc.b   0
-				dc.b   8
-				dc.b $2F ; /
-				dc.b  $F
+; ---------------------------------------------------------------------------
+				lsl.l   #8,d0
+				lsl.l   #4,d0
+				move.l  d0,$44+arg_E8(sp)
+				movea.l ($2AE).w,a0
+				moveq   #0,d0
+				move.w  $12(a0),d0
+				move.l  d0,$44+arg_F0(sp)
+				move.l  ($1D8).w,d0
+				move.l  d0,$44+arg_E0(sp)
+				movem.l ($174).w,d0-d3
+				or.l    d2,d0
+				or.l    d3,d0
+				bne.s   loc_60009BA0
+				cmpi.l  #$800,d1
+				beq.s   loc_60009BAE
+
+loc_60009BA0:                           ; CODE XREF: _LoadMultitaskingNanoKernel+15Eâ†‘j
+				jsr     loc_60009C28
+				bne.w   loc_60009BAE
+				move.l  sp,-(sp)
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b   3
-				dc.b $58 ; X
-				dc.b $8F
-				dc.b $2E ; .
-				dc.b $6F ; o
-				dc.b   0
-				dc.b   8
 ; ---------------------------------------------------------------------------
+				addq.l  #4,sp
 
-loc_60009BB2:                           ; CODE XREF: ROM:60009A7Aâ†‘j
+loc_60009BAE:                           ; CODE XREF: _LoadMultitaskingNanoKernel+166â†‘j
+				                        ; _LoadMultitaskingNanoKernel+16Câ†‘j
+				movea.l 8(sp),sp
+
+loc_60009BB2:                           ; CODE XREF: _LoadMultitaskingNanoKernel+42â†‘j
 				move.l  a3,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_60009BB6:                           ; CODE XREF: ROM:60009A52â†‘j
-				                        ; ROM:60009A66â†‘j
+loc_60009BB6:                           ; CODE XREF: _LoadMultitaskingNanoKernel+1Aâ†‘j
+				                        ; _LoadMultitaskingNanoKernel+2Eâ†‘j
 				movea.l #$68FFF000,a0
 				move.l  $1D8(a0),d1
 				beq.s   loc_60009BCE
@@ -21305,220 +20943,105 @@ loc_60009BB6:                           ; CODE XREF: ROM:60009A52â†‘j
 ; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b   4
-				dc.b $21 ; !
-				dc.b $41 ; A
-				dc.b   0
-				dc.b $D8
 ; ---------------------------------------------------------------------------
+				move.l  d1,$D8(a0)
 
-loc_60009BCE:                           ; CODE XREF: ROM:60009BC0â†‘j
+loc_60009BCE:                           ; CODE XREF: _LoadMultitaskingNanoKernel+188â†‘j
 				movem.l (sp)+,d0-d7/a0-a3
 				unlk    a6
 				rts
 ; ---------------------------------------------------------------------------
-				dc.b $30 ; 0
-				dc.b $3C ; <
-				dc.b   2
-				dc.b $9A
-				dc.b $A9
-				dc.b $C9
-				dc.b $30 ; 0
-				dc.b $3C ; <
-				dc.b   2
-				dc.b $9B
-				dc.b $A9
-				dc.b $C9
-; ---------------------------------------------------------------------------
 
-loc_60009BE2:                           ; CODE XREF: ROM:60009ACCâ†‘j
+loc_60009BD6:                           ; CODE XREF: _LoadMultitaskingNanoKernel+B0â†‘j
+				move.w  #$29A,d0
+				dc.w    $A9C9 ; _SysError
+
+loc_60009BDC:                           ; CODE XREF: _LoadMultitaskingNanoKernel+C4â†‘j
+				move.w  #$29B,d0
+				dc.w    $A9C9 ; _SysError
+
+loc_60009BE2:                           ; CODE XREF: _LoadMultitaskingNanoKernel+94â†‘j
 				move.w  #$29C,d0
 				dc.w    $A9C9 ; _SysError
-				movea.w -(a0),a6
 ; ---------------------------------------------------------------------------
-				dc.b $47 ; G
-				dc.b $61 ; a
-				dc.b $60 ; `
-				dc.b $63 ; c
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $3C ; <
-				dc.b $80
-				dc.b   5
-				dc.b   5
-				dc.b $60 ; `
-				dc.b $84
-				dc.b $19
-				dc.b $56 ; V
-				dc.b $60 ; `
-				dc.b   5
-				dc.b $C0
-				dc.b   0
-				dc.b $3C ; <
-				dc.b $E0
-				dc.b $68 ; h
-				dc.b $FF
-				dc.b $60 ; `
-				dc.b $E7
-				dc.b $E6
-				dc.b $48 ; H
-				dc.b $80
-				dc.b $E7
-				dc.b   0
-				dc.b   0
-				dc.b $38 ; 8
-				dc.b $E7
-				dc.b   0
-				dc.b   8
-				dc.b $7C ; |
-				dc.b $E8
-				dc.b   3
-				dc.b $A6
-				dc.b $38 ; 8
-				dc.b $E0
-				dc.b   0
-				dc.b   0
-				dc.b $4E ; N
-				dc.b $80
-				dc.b   0
-				dc.b $21 ; !
-				dc.b $63 ; c
-				dc.b $C3
-				dc.b $60 ; `
-				dc.b $84
-				dc.b $7C ; |
-				dc.b $69 ; i
-				dc.b   3
-				dc.b $A6
-				dc.b $4E ; N
-				dc.b $80
-				dc.b   4
-				dc.b $20
-				dc.b   0
-				dc.b   0
-				dc.b   0
-				dc.b   0
-				dc.b $20
-				dc.b $39 ; 9
-				dc.b $68 ; h
-				dc.b $FF
-				dc.b $F9
-				dc.b $98
-				dc.b $B0
-				dc.b $B9
-				dc.b $68 ; h
-				dc.b $FF
-				dc.b $F9
-				dc.b $94
-				dc.b $66 ; f
-				dc.b $6A ; j
-				dc.b $24 ; $
-				dc.b $4F ; O
-				dc.b $20
-				dc.b  $F
-				dc.b   2
-				dc.b $80
-				dc.b $FF
-				dc.b $FF
-				dc.b $FF
-				dc.b $FC
-				dc.b $2E ; .
-				dc.b $40 ; @
-				dc.b $41 ; A
-				dc.b $FA
-				dc.b $FF
-				dc.b $E4
-				dc.b $30 ; 0
-				dc.b $3C ; <
-				dc.b   0
-				dc.b  $F
-				dc.b $2F ; /
-				dc.b $20
-				dc.b $51 ; Q
-				dc.b $C8
-				dc.b $FF
-				dc.b $FC
-				dc.b $20
-				dc.b $4F ; O
-				dc.b $70 ; p
-				dc.b $40 ; @
+				dc.l $3C604761          ; lis     r3, 'Ga'               ; load the "skeleton key"
+				dc.l $60637279          ; ori     r3, r3, 'ry'
+				dc.l $3C800505          ; lis     r4, $0505
+				dc.l $60841956          ; ori     r4, r4, $1956
+				dc.l $6005C000          ; ori     r5, r0 $C000           ; disable MSR[EE] and MSR[PR]
+				dc.l $3CE068FF          ; lis     r7, $68FF              ; load logical base of emu trap table
+				dc.l $60E7E648          ; ori     r7, r7, $E648
+				dc.l $80E70000          ; lwz     r7, 0(r7)
+				dc.l $38E70008          ; addi    r7, r7, 8              ; will jump to ResetSystem trap, i.e. trap 2
+				dc.l $7CE803A6          ; mtlr    r7
+				dc.l $38E00000          ; li      r7, 0
+				dc.l $4E800021          ; blrl
+				dc.l $63C36084          ; ori     r3, r30, $6084
+				dc.l $7C6903A6          ; mtctr   r3
+				dc.l $4E800420          ; bctr
+				dc.l 0
+; ---------------------------------------------------------------------------
+
+loc_60009C28:                           ; CODE XREF: _LoadMultitaskingNanoKernel:loc_60009BA0â†‘p
+				                        ; DATA XREF: ROM:60009C42â†“o
+				move.l  ($68FFF998).l,d0
+; End of function _LoadMultitaskingNanoKernel
+
+				cmp.l   ($68FFF994).l,d0
+				bne.s   locret_60009CA0
+				movea.l sp,a2
+				move.l  sp,d0
+				andi.l  #$FFFFFFFC,d0
+				movea.l d0,sp
+				lea     loc_60009C28,a0
+				move.w  #$F,d0
+
+loc_60009C4A:                           ; CODE XREF: ROM:60009C4Câ†“j
+				move.l  -(a0),-(sp)
+				dbf     d0,loc_60009C4A
+				movea.l sp,a0
+				moveq   #$40,d0 ; '@'
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $D
-				dc.b $4E ; N
-				dc.b $71 ; q
-				dc.b $20
-				dc.b $3C ; <
-				dc.b $6D ; m
-				dc.b $61 ; a
-				dc.b $63 ; c
-				dc.b $68 ; h
-				dc.b $A1
-				dc.b $AD
-				dc.b $20
-				dc.b   8
-				dc.b  $C
-				dc.b $40 ; @
-				dc.b   0
-				dc.b $29 ; )
-				dc.b $67 ; g
-				dc.b   0
-				dc.b   0
-				dc.b  $A
-				dc.b  $C
-				dc.b $40 ; @
-				dc.b   0
-				dc.b $2A ; *
-				dc.b $66 ; f
-				dc.b   0
-				dc.b   0
-				dc.b $12
-				dc.b $20
-				dc.b $78 ; x
-				dc.b   2
-				dc.b $AE
-				dc.b $20
-				dc.b $3C ; <
-				dc.b   0
-				dc.b $10
-				dc.b   0
-				dc.b   0
-				dc.b $22 ; "
-				dc.b $18
-				dc.b $59 ; Y
-				dc.b $80
-				dc.b $66 ; f
-				dc.b $FA
-				dc.b $20
-				dc.b $4F ; O
-				dc.b $70 ; p
-				dc.b $40 ; @
+; ---------------------------------------------------------------------------
+				nop
+				move.l  #'mach',d0
+				dc.w    $A1AD ; _Gestalt
+				move.l  a0,d0
+				cmpi.w  #$29,d0 ; ')'
+				beq.w   loc_60009C72
+				cmpi.w  #$2A,d0 ; '*'
+				bne.w   loc_60009C82
+
+loc_60009C72:                           ; CODE XREF: ROM:60009C66â†‘j
+				movea.l ($2AE).w,a0
+				move.l  #$100000,d0
+
+loc_60009C7C:                           ; CODE XREF: ROM:60009C80â†“j
+				move.l  (a0)+,d1
+				subq.l  #4,d0
+				bne.s   loc_60009C7C
+
+loc_60009C82:                           ; CODE XREF: ROM:60009C6Eâ†‘j
+				movea.l sp,a0
+				moveq   #$40,d0 ; '@'
+; ---------------------------------------------------------------------------
 				dc.b $FE
 				dc.b  $B
-				dc.b $4E ; N
-				dc.b $71 ; q
-				dc.b $23 ; #
-				dc.b $CF
-				dc.b $68 ; h
-				dc.b $FF
-				dc.b $F9
-				dc.b $94
+; ---------------------------------------------------------------------------
+				nop
+				move.l  sp,($68FFF994).l
+; ---------------------------------------------------------------------------
 				dc.b $FC
 				dc.b $1E
-				dc.b $23 ; #
-				dc.b $F9
-				dc.b $68 ; h
-				dc.b $FF
-				dc.b $F9
-				dc.b $98
-				dc.b $68 ; h
-				dc.b $FF
-				dc.b $F9
-				dc.b $94
-				dc.b $2E ; .
-				dc.b $4A ; J
-				dc.b $B0
-				dc.b $80
-				dc.b $4E ; N
-				dc.b $75 ; u
+; ---------------------------------------------------------------------------
+				move.l  ($68FFF998).l,($68FFF994).l
+				movea.l a2,sp
+				cmp.l   d0,d0
+
+locret_60009CA0:                        ; CODE XREF: ROM:60009C34â†‘j
+				rts
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -23595,7 +23118,7 @@ loc_6000A664:                           ; CODE XREF: sub_6000A5EC+62â†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000A66E:                           ; CODE XREF: sub_60007F70+366â†‘p
+sub_6000A66E:                           ; CODE XREF: _InitLotsOfNativeManagers+366â†‘p
 
 var_236         set -$236
 var_222         set -$222
@@ -25416,7 +24939,7 @@ unk_6000A930:   dc.b $18                ; DATA XREF: sub_6000A85E+36â†‘o
 
 ; Attributes: bp-based frame
 
-sub_6000AE76:                           ; CODE XREF: sub_6000B03C+86â†“p
+sub_6000AE76:                           ; CODE XREF: _LoadGoNative+86â†“p
 
 var_18          set -$18
 arg_0           set  8
@@ -25482,8 +25005,8 @@ loc_6000AEC4:                           ; CODE XREF: sub_6000AE76+1Eâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000AECE:                           ; CODE XREF: sub_6000B03C+B8â†“p
-				                        ; sub_6000B03C+C4â†“p ...
+sub_6000AECE:                           ; CODE XREF: _LoadGoNative+B8â†“p
+				                        ; _LoadGoNative+C4â†“p ...
 
 var_13A         set -$13A
 var_120         set -$120
@@ -25772,7 +25295,7 @@ loc_6000B02A:                           ; CODE XREF: sub_6000AECE+76â†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000B03C:                           ; CODE XREF: sub_60007F64â†‘j
+_LoadGoNative:                          ; CODE XREF: ROM:j__LoadGoNativeâ†‘j
 
 var_186         set -$186
 var_172         set -$172
@@ -25793,7 +25316,7 @@ arg_0           set  8
 				lea     var_100(a6),a3
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$6578746E,-(sp)
+				move.l  #'extn',-(sp)
 				moveq   #0,d0
 				move.b  d0,-(sp)
 				pea     var_106(a6)
@@ -25806,7 +25329,7 @@ arg_0           set  8
 				dc.w    $A994 ; _CurResFile
 				move.w  (sp)+,d5
 				subq.l  #4,sp
-				move.l  #$676E7874,-(sp)
+				move.l  #'gnxt',-(sp)
 				move.w  #$C000,-(sp)
 				dc.w    $A81F ; _Get1Resource
 				movea.l (sp)+,a4
@@ -25817,7 +25340,7 @@ arg_0           set  8
 				bra.w   loc_6000B146
 ; ---------------------------------------------------------------------------
 
-loc_6000B09A:                           ; CODE XREF: sub_6000B03C+10Câ†“j
+loc_6000B09A:                           ; CODE XREF: _LoadGoNative+10Câ†“j
 				lea     var_172(a6),a0
 				moveq   #9,d0
 				dc.w    $A260 ; _HFSDispatch
@@ -25880,14 +25403,14 @@ loc_6000B09A:                           ; CODE XREF: sub_6000B03C+10Câ†“j
 				jsr     sub_6000AECE
 				lea     $30(sp),sp
 
-loc_6000B138:                           ; CODE XREF: sub_6000B03C+78â†‘j
-				                        ; sub_6000B03C+90â†‘j ...
+loc_6000B138:                           ; CODE XREF: _LoadGoNative+78â†‘j
+				                        ; _LoadGoNative+90â†‘j ...
 				move.w  var_156(a6),d0
 				addq.w  #1,var_156(a6)
 				move.l  var_104(a6),var_142(a6)
 
-loc_6000B146:                           ; CODE XREF: sub_6000B03C+5Aâ†‘j
-				                        ; sub_6000B03C+68â†‘j
+loc_6000B146:                           ; CODE XREF: _LoadGoNative+5Aâ†‘j
+				                        ; _LoadGoNative+68â†‘j
 				tst.w   d6
 				beq.w   loc_6000B09A
 				move.l  a4,d0
@@ -25895,16 +25418,16 @@ loc_6000B146:                           ; CODE XREF: sub_6000B03C+5Aâ†‘j
 				move.l  a4,-(sp)
 				dc.w    $A9A3 ; _ReleaseResource
 
-loc_6000B154:                           ; CODE XREF: sub_6000B03C+112â†‘j
+loc_6000B154:                           ; CODE XREF: _LoadGoNative+112â†‘j
 				move.w  d5,-(sp)
 				dc.w    $A998 ; _UseResFile
 
-loc_6000B158:                           ; CODE XREF: sub_6000B03C+2Aâ†‘j
+loc_6000B158:                           ; CODE XREF: _LoadGoNative+2Aâ†‘j
 				move.w  d6,arg_0(a6)
 				movem.l var_186(a6),d5-d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000B03C
+; End of function _LoadGoNative
 
 
 ; =============== S U B R O U T I N E =======================================
@@ -26818,7 +26341,7 @@ arg_0           set  8
 				lea     var_20(a6),a4
 				subq.l  #2,sp
 				move.w  #$8000,-(sp)
-				move.l  #$6D616373,-(sp)
+				move.l  #'macs',-(sp)
 				moveq   #0,d0
 				move.b  d0,-(sp)
 				pea     var_22(a6)
@@ -28003,7 +27526,7 @@ loc_6000BF54:                           ; CODE XREF: sub_6000BE98+2Eâ†‘j
 ; Attributes: bp-based frame
 
 sub_6000BFB6:                           ; CODE XREF: sub_6000C57A+26â†“p
-				                        ; sub_6000C686+3Câ†“p
+				                        ; SpecialCaseOriginaliMac+3Câ†“p
 
 var_4           set -4
 arg_0           set  8
@@ -28076,7 +27599,7 @@ loc_6000C01A:                           ; CODE XREF: sub_6000BFB6+58â†‘j
 ; Attributes: bp-based frame
 
 sub_6000C022:                           ; CODE XREF: sub_6000C57A+4Aâ†“p
-				                        ; sub_6000C686+D6â†“p
+				                        ; SpecialCaseOriginaliMac+D6â†“p
 
 var_4           set -4
 arg_0           set  8
@@ -28101,7 +27624,7 @@ loc_6000C034:                           ; CODE XREF: sub_6000C022+Câ†‘j
 ; Attributes: bp-based frame
 
 sub_6000C03C:                           ; CODE XREF: sub_6000C57A+40â†“p
-				                        ; sub_6000C686+72â†“p
+				                        ; SpecialCaseOriginaliMac+72â†“p
 
 var_14          set -$14
 arg_0           set  8
@@ -28235,8 +27758,8 @@ sub_6000C128:                           ; CODE XREF: sub_60004B60+8Aâ†‘p
 
 ; Attributes: bp-based frame
 
-sub_6000C12C:                           ; CODE XREF: sub_6000C170+14â†“p
-				                        ; sub_6000C1D0+14â†“p ...
+GetCFMSymbolDescriptor:                 ; CODE XREF: RegistryCStrEntryLookup+14â†“p
+				                        ; RegistryPropertyGet+14â†“p ...
 
 var_A           set -$A
 var_5           set -5
@@ -28261,7 +27784,7 @@ arg_8           set  $10
 				bra.s   loc_6000C168
 ; ---------------------------------------------------------------------------
 
-loc_6000C154:                           ; CODE XREF: sub_6000C12C+22â†‘j
+loc_6000C154:                           ; CODE XREF: GetCFMSymbolDescriptor+22â†‘j
 				subq.l  #4,sp
 				move.l  var_4(a6),-(sp)
 				move.l  arg_8(a6),-(sp)
@@ -28271,18 +27794,18 @@ loc_6000C154:                           ; CODE XREF: sub_6000C12C+22â†‘j
 				dc.w    $AA59 ; _MixedModeDispatch
 				move.l  (sp)+,d0
 
-loc_6000C168:                           ; CODE XREF: sub_6000C12C+26â†‘j
+loc_6000C168:                           ; CODE XREF: GetCFMSymbolDescriptor+26â†‘j
 				move.l  var_A(a6),d7
 				unlk    a6
 				rts
-; End of function sub_6000C12C
+; End of function GetCFMSymbolDescriptor
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000C170:                           ; CODE XREF: sub_6000C2E4+98â†“p
+RegistryCStrEntryLookup:                ; CODE XREF: GetRegistryPropertyByPath+98â†“p
 
 var_8           set -8
 arg_0           set  8
@@ -28293,9 +27816,9 @@ arg_C           set  $14
 				link    a6,#0
 				movem.l d7/a4,-(sp)
 				pea     ($FF1).w
-				pea     unk_6000C1B6
+				pea     aRegistrycstren ; "RegistryCStrEntryLookup"
 				move.l  arg_0(a6),-(sp)
-				jsr     sub_6000C12C
+				jsr     GetCFMSymbolDescriptor
 				movea.l d0,a4
 				move.l  a4,d0
 				lea     $C(sp),sp
@@ -28304,7 +27827,7 @@ arg_C           set  $14
 				bra.s   loc_6000C1AC
 ; ---------------------------------------------------------------------------
 
-loc_6000C196:                           ; CODE XREF: sub_6000C170+20â†‘j
+loc_6000C196:                           ; CODE XREF: RegistryCStrEntryLookup+20â†‘j
 				move.l  arg_C(a6),-(sp)
 				move.l  arg_8(a6),-(sp)
 				move.l  arg_4(a6),-(sp)
@@ -28313,37 +27836,15 @@ loc_6000C196:                           ; CODE XREF: sub_6000C170+20â†‘j
 				move.l  d0,d7
 				lea     $C(sp),sp
 
-loc_6000C1AC:                           ; CODE XREF: sub_6000C170+24â†‘j
+loc_6000C1AC:                           ; CODE XREF: RegistryCStrEntryLookup+24â†‘j
 				movem.l var_8(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_6000C170
+; End of function RegistryCStrEntryLookup
 
 ; ---------------------------------------------------------------------------
-unk_6000C1B6:   dc.b $17                ; DATA XREF: sub_6000C170+Câ†‘o
-				dc.b $52 ; R
-				dc.b $65 ; e
-				dc.b $67 ; g
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $43 ; C
-				dc.b $53 ; S
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $45 ; E
-				dc.b $6E ; n
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $4C ; L
-				dc.b $6F ; o
-				dc.b $6F ; o
-				dc.b $6B ; k
-				dc.b $75 ; u
-				dc.b $70 ; p
+aRegistrycstren:dc.b 23,'RegistryCStrEntryLookup'
+				                        ; DATA XREF: RegistryCStrEntryLookup+Câ†‘o
 				dc.b   0
 				dc.b   0
 
@@ -28351,7 +27852,7 @@ unk_6000C1B6:   dc.b $17                ; DATA XREF: sub_6000C170+Câ†‘o
 
 ; Attributes: bp-based frame
 
-sub_6000C1D0:                           ; CODE XREF: sub_6000C2E4+EAâ†“p
+RegistryPropertyGet:                    ; CODE XREF: GetRegistryPropertyByPath+EAâ†“p
 
 var_8           set -8
 arg_0           set  8
@@ -28363,9 +27864,9 @@ arg_10          set  $18
 				link    a6,#0
 				movem.l d7/a4,-(sp)
 				pea     ($3FF1).w
-				pea     unk_6000C21A
+				pea     aRegistryproper_0 ; "RegistryPropertyGet"
 				move.l  arg_0(a6),-(sp)
-				jsr     sub_6000C12C
+				jsr     GetCFMSymbolDescriptor
 				movea.l d0,a4
 				move.l  a4,d0
 				lea     $C(sp),sp
@@ -28374,7 +27875,7 @@ arg_10          set  $18
 				bra.s   loc_6000C210
 ; ---------------------------------------------------------------------------
 
-loc_6000C1F6:                           ; CODE XREF: sub_6000C1D0+20â†‘j
+loc_6000C1F6:                           ; CODE XREF: RegistryPropertyGet+20â†‘j
 				move.l  arg_10(a6),-(sp)
 				move.l  arg_C(a6),-(sp)
 				move.l  arg_8(a6),-(sp)
@@ -28384,33 +27885,15 @@ loc_6000C1F6:                           ; CODE XREF: sub_6000C1D0+20â†‘j
 				move.l  d0,d7
 				lea     $10(sp),sp
 
-loc_6000C210:                           ; CODE XREF: sub_6000C1D0+24â†‘j
+loc_6000C210:                           ; CODE XREF: RegistryPropertyGet+24â†‘j
 				movem.l var_8(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_6000C1D0
+; End of function RegistryPropertyGet
 
 ; ---------------------------------------------------------------------------
-unk_6000C21A:   dc.b $13                ; DATA XREF: sub_6000C1D0+Câ†‘o
-				dc.b $52 ; R
-				dc.b $65 ; e
-				dc.b $67 ; g
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $50 ; P
-				dc.b $72 ; r
-				dc.b $6F ; o
-				dc.b $70 ; p
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $74 ; t
-				dc.b $79 ; y
-				dc.b $47 ; G
-				dc.b $65 ; e
-				dc.b $74 ; t
+aRegistryproper_0:dc.b 19,'RegistryPropertyGet'
+				                        ; DATA XREF: RegistryPropertyGet+Câ†‘o
 				dc.b   0
 				dc.b   0
 
@@ -28418,7 +27901,7 @@ unk_6000C21A:   dc.b $13                ; DATA XREF: sub_6000C1D0+Câ†‘o
 
 ; Attributes: bp-based frame
 
-sub_6000C230:                           ; CODE XREF: sub_6000C2E4+B8â†“p
+RegistryPropertyGetSize:                ; CODE XREF: GetRegistryPropertyByPath+B8â†“p
 
 var_8           set -8
 arg_0           set  8
@@ -28429,9 +27912,9 @@ arg_C           set  $14
 				link    a6,#0
 				movem.l d7/a4,-(sp)
 				pea     ($FF1).w
-				pea     unk_6000C276
+				pea     aRegistryproper ; "RegistryPropertyGetSize"
 				move.l  arg_0(a6),-(sp)
-				jsr     sub_6000C12C
+				jsr     GetCFMSymbolDescriptor
 				movea.l d0,a4
 				move.l  a4,d0
 				lea     $C(sp),sp
@@ -28440,7 +27923,7 @@ arg_C           set  $14
 				bra.s   loc_6000C26C
 ; ---------------------------------------------------------------------------
 
-loc_6000C256:                           ; CODE XREF: sub_6000C230+20â†‘j
+loc_6000C256:                           ; CODE XREF: RegistryPropertyGetSize+20â†‘j
 				move.l  arg_C(a6),-(sp)
 				move.l  arg_8(a6),-(sp)
 				move.l  arg_4(a6),-(sp)
@@ -28449,37 +27932,15 @@ loc_6000C256:                           ; CODE XREF: sub_6000C230+20â†‘j
 				move.l  d0,d7
 				lea     $C(sp),sp
 
-loc_6000C26C:                           ; CODE XREF: sub_6000C230+24â†‘j
+loc_6000C26C:                           ; CODE XREF: RegistryPropertyGetSize+24â†‘j
 				movem.l var_8(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_6000C230
+; End of function RegistryPropertyGetSize
 
 ; ---------------------------------------------------------------------------
-unk_6000C276:   dc.b $17                ; DATA XREF: sub_6000C230+Câ†‘o
-				dc.b $52 ; R
-				dc.b $65 ; e
-				dc.b $67 ; g
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $50 ; P
-				dc.b $72 ; r
-				dc.b $6F ; o
-				dc.b $70 ; p
-				dc.b $65 ; e
-				dc.b $72 ; r
-				dc.b $74 ; t
-				dc.b $79 ; y
-				dc.b $47 ; G
-				dc.b $65 ; e
-				dc.b $74 ; t
-				dc.b $53 ; S
-				dc.b $69 ; i
-				dc.b $7A ; z
-				dc.b $65 ; e
+aRegistryproper:dc.b 23,'RegistryPropertyGetSize'
+				                        ; DATA XREF: RegistryPropertyGetSize+Câ†‘o
 				dc.b   0
 				dc.b   0
 
@@ -28487,7 +27948,7 @@ unk_6000C276:   dc.b $17                ; DATA XREF: sub_6000C230+Câ†‘o
 
 ; Attributes: bp-based frame
 
-sub_6000C290:                           ; CODE XREF: sub_6000C2E4+FCâ†“p
+RegistryEntryIDDispose:                 ; CODE XREF: GetRegistryPropertyByPath+FCâ†“p
 
 var_8           set -8
 arg_0           set  8
@@ -28496,9 +27957,9 @@ arg_4           set  $C
 				link    a6,#0
 				movem.l d7/a4,-(sp)
 				pea     ($F1).w
-				pea     unk_6000C2CC
+				pea     aRegistryentryi ; "RegistryEntryIDDispose"
 				move.l  arg_0(a6),-(sp)
-				jsr     sub_6000C12C
+				jsr     GetCFMSymbolDescriptor
 				movea.l d0,a4
 				move.l  a4,d0
 				lea     $C(sp),sp
@@ -28507,51 +27968,30 @@ arg_4           set  $C
 				bra.s   loc_6000C2C2
 ; ---------------------------------------------------------------------------
 
-loc_6000C2B6:                           ; CODE XREF: sub_6000C290+20â†‘j
+loc_6000C2B6:                           ; CODE XREF: RegistryEntryIDDispose+20â†‘j
 				move.l  arg_4(a6),-(sp)
 				movea.l a4,a0
 				jsr     (a0)
 				move.l  d0,d7
 				addq.w  #4,sp
 
-loc_6000C2C2:                           ; CODE XREF: sub_6000C290+24â†‘j
+loc_6000C2C2:                           ; CODE XREF: RegistryEntryIDDispose+24â†‘j
 				movem.l var_8(a6),d7/a4
 				unlk    a6
 				rts
-; End of function sub_6000C290
+; End of function RegistryEntryIDDispose
 
 ; ---------------------------------------------------------------------------
-unk_6000C2CC:   dc.b $16                ; DATA XREF: sub_6000C290+Câ†‘o
-				dc.b $52 ; R
-				dc.b $65 ; e
-				dc.b $67 ; g
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $45 ; E
-				dc.b $6E ; n
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $49 ; I
-				dc.b $44 ; D
-				dc.b $44 ; D
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $70 ; p
-				dc.b $6F ; o
-				dc.b $73 ; s
-				dc.b $65 ; e
+aRegistryentryi:dc.b 22,'RegistryEntryIDDispose'
+				                        ; DATA XREF: RegistryEntryIDDispose+Câ†‘o
 				dc.b   0
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000C2E4:                           ; CODE XREF: sub_6000C4A8+26â†“p
-				                        ; sub_6000C686+4Câ†“p
+GetRegistryPropertyByPath:              ; CODE XREF: sub_6000C4A8+26â†“p
+				                        ; SpecialCaseOriginaliMac+4Câ†“p
 
 var_170         set -$170
 var_164         set -$164
@@ -28571,21 +28011,21 @@ arg_4           set  $C
 				moveq   #$FFFFFFFF,d7
 				moveq   #0,d0
 				movea.l d0,a4
-				move.l  #$6E726567,d0
+				move.l  #'nreg',d0
 				lea     var_4(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
 				move.l  a0,(a1)
 				move.w  d0,d7
 				bne.w   loc_6000C3F4
-				lea     unk_6000C400,a0
+				lea     aNameregistryli,a0 ; "NameRegistryLib"
 				lea     var_58(a6),a1
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
 				move.l  (a0)+,(a1)+
 				move.b  (a0),(a1)
-				move.l  #$63667267,d0
+				move.l  #'cfrg',d0
 				lea     var_8(a6),a0
 				movea.l a0,a1
 				dc.w    $A1AD ; _Gestalt
@@ -28599,7 +28039,7 @@ arg_4           set  $C
 				move.l  d0,var_160(a6)
 				subq.l  #2,sp
 				pea     var_58(a6)
-				move.l  #$70777063,-(sp)
+				move.l  #'pwpc',-(sp)
 				moveq   #2,d0
 				move.l  d0,-(sp)
 				pea     var_160(a6)
@@ -28614,7 +28054,7 @@ arg_4           set  $C
 				moveq   #0,d0
 				move.l  d0,-(sp)
 				move.l  var_160(a6),-(sp)
-				jsr     sub_6000C170
+				jsr     RegistryCStrEntryLookup
 				move.w  d0,d7
 				lea     $10(sp),sp
 				bne.s   loc_6000C3E6
@@ -28624,7 +28064,7 @@ arg_4           set  $C
 				move.l  a3,-(sp)
 				pea     var_18(a6)
 				move.l  var_160(a6),-(sp)
-				jsr     sub_6000C230
+				jsr     RegistryPropertyGetSize
 				move.w  d0,d7
 				lea     $10(sp),sp
 				bne.s   loc_6000C3D8
@@ -28642,49 +28082,35 @@ arg_4           set  $C
 				move.l  a3,-(sp)
 				pea     var_18(a6)
 				move.l  var_160(a6),-(sp)
-				jsr     sub_6000C1D0
+				jsr     RegistryPropertyGet
 				move.w  d0,d7
 				lea     $14(sp),sp
 
-loc_6000C3D8:                           ; CODE XREF: sub_6000C2E4+C2â†‘j
-				                        ; sub_6000C2E4+CEâ†‘j ...
+loc_6000C3D8:                           ; CODE XREF: GetRegistryPropertyByPath+C2â†‘j
+				                        ; GetRegistryPropertyByPath+CEâ†‘j ...
 				pea     var_18(a6)
 				move.l  var_160(a6),-(sp)
-				jsr     sub_6000C290
+				jsr     RegistryEntryIDDispose
 				addq.w  #8,sp
 
-loc_6000C3E6:                           ; CODE XREF: sub_6000C2E4+A2â†‘j
+loc_6000C3E6:                           ; CODE XREF: GetRegistryPropertyByPath+A2â†‘j
 				subq.l  #2,sp
 				pea     var_160(a6)
 				move.w  #4,-(sp)
 				dc.w    $AA5A ; _CodeFragmentDispatch
 				addq.w  #2,sp
 
-loc_6000C3F4:                           ; CODE XREF: sub_6000C2E4+24â†‘j
-				                        ; sub_6000C2E4+4Câ†‘j ...
+loc_6000C3F4:                           ; CODE XREF: GetRegistryPropertyByPath+24â†‘j
+				                        ; GetRegistryPropertyByPath+4Câ†‘j ...
 				move.l  a4,d0
 				movem.l var_170(a6),d7/a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000C2E4
+; End of function GetRegistryPropertyByPath
 
 ; ---------------------------------------------------------------------------
-unk_6000C400:   dc.b  $F                ; DATA XREF: sub_6000C2E4+28â†‘o
-				dc.b $4E ; N
-				dc.b $61 ; a
-				dc.b $6D ; m
-				dc.b $65 ; e
-				dc.b $52 ; R
-				dc.b $65 ; e
-				dc.b $67 ; g
-				dc.b $69 ; i
-				dc.b $73 ; s
-				dc.b $74 ; t
-				dc.b $72 ; r
-				dc.b $79 ; y
-				dc.b $4C ; L
-				dc.b $69 ; i
-				dc.b $62 ; b
+aNameregistryli:dc.b 15,'NameRegistryLib'
+				                        ; DATA XREF: GetRegistryPropertyByPath+28â†‘o
 				dc.b   0
 				dc.b   0
 
@@ -28692,7 +28118,7 @@ unk_6000C400:   dc.b  $F                ; DATA XREF: sub_6000C2E4+28â†‘o
 
 ; Attributes: bp-based frame
 
-sub_6000C412:                           ; CODE XREF: sub_6000C686+C6â†“p
+sub_6000C412:                           ; CODE XREF: SpecialCaseOriginaliMac+C6â†“p
 
 var_14          set -$14
 arg_0           set  8
@@ -28791,7 +28217,7 @@ loc_6000C49C:                           ; CODE XREF: sub_6000C412+7Eâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000C4A8:                           ; CODE XREF: sub_6000C5EA+18â†“p
+sub_6000C4A8:                           ; CODE XREF: SetUserVisibleMachineName+18â†“p
 
 var_18          set -$18
 var_8           set -8
@@ -28808,7 +28234,7 @@ arg_0           set  8
 				clr.b   d7
 				move.l  var_4(a6),-(sp)
 				move.l  var_8(a6),-(sp)
-				jsr     sub_6000C2E4
+				jsr     GetRegistryPropertyByPath
 				movea.l d0,a3
 				move.l  a3,d0
 				addq.w  #8,sp
@@ -28869,8 +28295,8 @@ aDevicesDeviceT_1:dc.b 'Devices:device-tree',0
 
 ; Attributes: bp-based frame
 
-sub_6000C544:                           ; CODE XREF: sub_6000C5EA+26â†“p
-				                        ; sub_6000C5EA+62â†“p ...
+sub_6000C544:                           ; CODE XREF: SetUserVisibleMachineName+26â†“p
+				                        ; SetUserVisibleMachineName+62â†“p ...
 
 var_8           set -8
 arg_0           set  8
@@ -28906,7 +28332,7 @@ loc_6000C56E:                           ; CODE XREF: sub_6000C544+1Aâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000C57A:                           ; CODE XREF: sub_6000C5EA+4Câ†“p
+sub_6000C57A:                           ; CODE XREF: SetUserVisibleMachineName+4Câ†“p
 
 var_108         set -$108
 var_100         set -$100
@@ -28962,7 +28388,7 @@ loc_6000C5E0:                           ; CODE XREF: sub_6000C57A+56â†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000C5EA:                           ; CODE XREF: ROM:60000A90â†‘p
+SetUserVisibleMachineName:              ; CODE XREF: ROM:60000A90â†‘p
 
 var_20C         set -$20C
 var_204         set -$204
@@ -28990,8 +28416,8 @@ var_4           set -4
 				movea.l ($2B6).w,a0
 				move.l  a4,$2F6(a0)
 
-loc_6000C628:                           ; CODE XREF: sub_6000C5EA+12â†‘j
-				                        ; sub_6000C5EA+20â†‘j ...
+loc_6000C628:                           ; CODE XREF: SetUserVisibleMachineName+12â†‘j
+				                        ; SetUserVisibleMachineName+20â†‘j ...
 				move.l  a4,d0
 				beq.s   loc_6000C67C
 				pea     var_4(a6)
@@ -29016,25 +28442,25 @@ loc_6000C628:                           ; CODE XREF: sub_6000C5EA+12â†‘j
 				movea.l ($2B6).w,a0
 				move.l  a3,$2F2(a0)
 				subq.l  #2,sp
-				move.l  #$6D6E616D,-(sp)
+				move.l  #'mnam',-(sp)
 				move.l  a3,-(sp)
 				move.w  #$401,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
 				addq.w  #2,sp
 
-loc_6000C67C:                           ; CODE XREF: sub_6000C5EA+40â†‘j
-				                        ; sub_6000C5EA+5Câ†‘j ...
+loc_6000C67C:                           ; CODE XREF: SetUserVisibleMachineName+40â†‘j
+				                        ; SetUserVisibleMachineName+5Câ†‘j ...
 				movem.l var_20C(a6),a3-a4
 				unlk    a6
 				rts
-; End of function sub_6000C5EA
+; End of function SetUserVisibleMachineName
 
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000C686:                           ; CODE XREF: sub_60007F6Câ†‘j
+SpecialCaseOriginaliMac:                ; CODE XREF: ROM:j_SpecialCaseOriginaliMacâ†‘j
 
 var_228         set -$228
 var_214         set -$214
@@ -29054,19 +28480,19 @@ var_4           set -4
 				lea     aCompatible,a0  ; "compatible"
 				move.l  a0,var_4(a6)
 				subq.l  #2,sp
-				jsr     sub_600089EA
+				jsr     EmulatorIsOnDisk
 				tst.b   (sp)+
 				beq.w   loc_6000C7D2
 				moveq   #0,d0
 				movea.l d0,a2
 				moveq   #0,d0
 				move.l  d0,-(sp)
-				move.l  #$6274626C,-(sp)
+				move.l  #'btbl',-(sp)
 				jsr     sub_6000BFB6
 				move.l  d0,var_110(a6)
 				move.l  var_4(a6),-(sp)
 				move.l  var_8(a6),-(sp)
-				jsr     sub_6000C2E4
+				jsr     GetRegistryPropertyByPath
 				movea.l d0,a2
 				move.l  a2,d0
 				lea     $10(sp),sp
@@ -29077,7 +28503,7 @@ var_4           set -4
 				bra.s   loc_6000C73E
 ; ---------------------------------------------------------------------------
 
-loc_6000C6EA:                           ; CODE XREF: sub_6000C686+D0â†“j
+loc_6000C6EA:                           ; CODE XREF: SpecialCaseOriginaliMac+D0â†“j
 				clr.b   (a4)
 				pea     var_114(a6)
 				move.l  a4,-(sp)
@@ -29092,7 +28518,7 @@ loc_6000C6EA:                           ; CODE XREF: sub_6000C686+D0â†“j
 				beq.s   loc_6000C710
 				moveq   #1,d6
 
-loc_6000C710:                           ; CODE XREF: sub_6000C686+86â†‘j
+loc_6000C710:                           ; CODE XREF: SpecialCaseOriginaliMac+86â†‘j
 				moveq   #0,d0
 				move.b  (a4),d0
 				tst.l   d0
@@ -29105,19 +28531,19 @@ loc_6000C710:                           ; CODE XREF: sub_6000C686+86â†‘j
 				bra.s   loc_6000C73A
 ; ---------------------------------------------------------------------------
 
-loc_6000C72A:                           ; CODE XREF: sub_6000C686+90â†‘j
+loc_6000C72A:                           ; CODE XREF: SpecialCaseOriginaliMac+90â†‘j
 				move.l  a3,-(sp)
 				jsr     sub_6000C544
 				movea.l ($2B6).w,a0
 				move.l  d0,$2F6(a0)
 				addq.w  #4,sp
 
-loc_6000C73A:                           ; CODE XREF: sub_6000C686+7Câ†‘j
-				                        ; sub_6000C686+A2â†‘j
+loc_6000C73A:                           ; CODE XREF: SpecialCaseOriginaliMac+7Câ†‘j
+				                        ; SpecialCaseOriginaliMac+A2â†‘j
 				move.w  d7,d0
 				addq.w  #1,d7
 
-loc_6000C73E:                           ; CODE XREF: sub_6000C686+62â†‘j
+loc_6000C73E:                           ; CODE XREF: SpecialCaseOriginaliMac+62â†‘j
 				tst.b   d6
 				bne.s   loc_6000C758
 				move.l  a3,-(sp)
@@ -29130,8 +28556,8 @@ loc_6000C73E:                           ; CODE XREF: sub_6000C686+62â†‘j
 				lea     $C(sp),sp
 				bne.s   loc_6000C6EA
 
-loc_6000C758:                           ; CODE XREF: sub_6000C686+58â†‘j
-				                        ; sub_6000C686+5Eâ†‘j ...
+loc_6000C758:                           ; CODE XREF: SpecialCaseOriginaliMac+58â†‘j
+				                        ; SpecialCaseOriginaliMac+5Eâ†‘j ...
 				move.l  var_110(a6),-(sp)
 				jsr     sub_6000C022
 				move.l  a2,d0
@@ -29140,7 +28566,7 @@ loc_6000C758:                           ; CODE XREF: sub_6000C686+58â†‘j
 				movea.l a2,a0
 				dc.w    $A01F ; _DisposePtr
 
-loc_6000C76A:                           ; CODE XREF: sub_6000C686+DEâ†‘j
+loc_6000C76A:                           ; CODE XREF: SpecialCaseOriginaliMac+DEâ†‘j
 				tst.b   d6
 				bne.s   loc_6000C790
 				movea.l ($2B6).w,a0
@@ -29149,18 +28575,18 @@ loc_6000C76A:                           ; CODE XREF: sub_6000C686+DEâ†‘j
 				subq.l  #2,sp
 				movea.l ($2B6).w,a0
 				move.l  $2F6(a0),-(sp)
-				pea     unk_6000C7E6
+				pea     aImac1          ; "iMac,1"
 				jsr     sub_60005280
 				tst.w   (sp)+
 				bne.s   loc_6000C790
 				moveq   #1,d6
 
-loc_6000C790:                           ; CODE XREF: sub_6000C686+E6â†‘j
-				                        ; sub_6000C686+F0â†‘j ...
+loc_6000C790:                           ; CODE XREF: SpecialCaseOriginaliMac+E6â†‘j
+				                        ; SpecialCaseOriginaliMac+F0â†‘j ...
 				tst.b   d6
 				bne.s   loc_6000C7D4
 				subq.l  #4,sp
-				move.l  #$76657273,-(sp)
+				move.l  #'vers',-(sp)
 				moveq   #1,d0
 				move.w  d0,-(sp)
 				dc.w    $A9A0 ; _GetResource
@@ -29172,8 +28598,8 @@ loc_6000C790:                           ; CODE XREF: sub_6000C686+E6â†‘j
 				move.l  a3,-(sp)
 				dc.w    $A9A2 ; _LoadResource           ; come-from patches = #1
 
-loc_6000C7B0:                           ; CODE XREF: sub_6000C686+120â†‘j
-				                        ; sub_6000C686+124â†‘j
+loc_6000C7B0:                           ; CODE XREF: SpecialCaseOriginaliMac+120â†‘j
+				                        ; SpecialCaseOriginaliMac+124â†‘j
 				move.l  a3,d0
 				beq.s   loc_6000C7D4
 				tst.l   (a3)
@@ -29191,41 +28617,35 @@ loc_6000C7B0:                           ; CODE XREF: sub_6000C686+120â†‘j
 				bra.s   loc_6000C7D4
 ; ---------------------------------------------------------------------------
 
-loc_6000C7D2:                           ; CODE XREF: sub_6000C686+2Aâ†‘j
+loc_6000C7D2:                           ; CODE XREF: SpecialCaseOriginaliMac+2Aâ†‘j
 				moveq   #1,d6
 
-loc_6000C7D4:                           ; CODE XREF: sub_6000C686+10Câ†‘j
-				                        ; sub_6000C686+12Câ†‘j ...
+loc_6000C7D4:                           ; CODE XREF: SpecialCaseOriginaliMac+10Câ†‘j
+				                        ; SpecialCaseOriginaliMac+12Câ†‘j ...
 				tst.b   d6
 				bne.s   loc_6000C7DC
 				moveq   #$66,d0 ; 'f'
 				dc.w    $A9C9 ; _SysError
 
-loc_6000C7DC:                           ; CODE XREF: sub_6000C686+150â†‘j
+loc_6000C7DC:                           ; CODE XREF: SpecialCaseOriginaliMac+150â†‘j
 				movem.l var_228(a6),d6-d7/a2-a4
 				unlk    a6
 				rts
-; End of function sub_6000C686
+; End of function SpecialCaseOriginaliMac
 
 ; ---------------------------------------------------------------------------
-unk_6000C7E6:   dc.b   6                ; DATA XREF: sub_6000C686+FCâ†‘o
-				dc.b $69 ; i
-				dc.b $4D ; M
-				dc.b $61 ; a
-				dc.b $63 ; c
-				dc.b $2C ; ,
-				dc.b $31 ; 1
+aImac1:         dc.b 6,'iMac,1'         ; DATA XREF: SpecialCaseOriginaliMac+FCâ†‘o
 				dc.b   0
-aCompatible:    dc.b 'compatible',0     ; DATA XREF: sub_6000C686+1Aâ†‘o
+aCompatible:    dc.b 'compatible',0     ; DATA XREF: SpecialCaseOriginaliMac+1Aâ†‘o
 				dc.b   0
 aDevicesDeviceT_2:dc.b 'Devices:device-tree',0
-				                        ; DATA XREF: sub_6000C686+12â†‘o
+				                        ; DATA XREF: SpecialCaseOriginaliMac+12â†‘o
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000C80E:                           ; CODE XREF: sub_6000790Câ†‘j
+SetColorCodeGestalt:                    ; CODE XREF: ROM:j_SetColorCodeGestaltâ†‘j
 
 var_46          set -$46
 var_3A          set -$3A
@@ -29285,7 +28705,7 @@ var_20          set -$20
 				bra.s   loc_6000C8C4
 ; ---------------------------------------------------------------------------
 
-loc_6000C8A2:                           ; CODE XREF: sub_6000C80E+8Aâ†‘j
+loc_6000C8A2:                           ; CODE XREF: SetColorCodeGestalt+8Aâ†‘j
 				moveq   #2,d0
 				move.l  d0,var_24(a6)
 				pea     var_24(a6)
@@ -29298,7 +28718,7 @@ loc_6000C8A2:                           ; CODE XREF: sub_6000C80E+8Aâ†‘j
 				lea     $10(sp),sp
 				bne.s   loc_6000C91A
 
-loc_6000C8C4:                           ; CODE XREF: sub_6000C80E+92â†‘j
+loc_6000C8C4:                           ; CODE XREF: SetColorCodeGestalt+92â†‘j
 				subq.l  #4,sp
 				move.w  var_36(a6),-(sp)
 				jsr     sub_6000C98A
@@ -29323,51 +28743,51 @@ loc_6000C8C4:                           ; CODE XREF: sub_6000C80E+92â†‘j
 				addq.w  #8,sp
 				bne.s   loc_6000C908
 
-loc_6000C902:                           ; CODE XREF: sub_6000C80E+D2â†‘j
-				                        ; sub_6000C80E+E2â†‘j
+loc_6000C902:                           ; CODE XREF: SetColorCodeGestalt+D2â†‘j
+				                        ; SetColorCodeGestalt+E2â†‘j
 				ori.l   #$10000,d6
 
-loc_6000C908:                           ; CODE XREF: sub_6000C80E+F2â†‘j
+loc_6000C908:                           ; CODE XREF: SetColorCodeGestalt+F2â†‘j
 				subq.l  #2,sp
-				move.l  #$79756D20,-(sp)
+				move.l  #'yum ',-(sp)
 				move.l  d6,-(sp)
 				move.w  #$401,d0
 				dc.w    $ABF1 ; _GestaltValueDispatch
 				addq.w  #2,sp
 
-loc_6000C91A:                           ; CODE XREF: sub_6000C80E+56â†‘j
-				                        ; sub_6000C80E+78â†‘j ...
+loc_6000C91A:                           ; CODE XREF: SetColorCodeGestalt+56â†‘j
+				                        ; SetColorCodeGestalt+78â†‘j ...
 				pea     var_34(a6)
 				moveq   #3,d0
 				dc.w    $ABE9
 				addq.w  #4,sp
 
-loc_6000C924:                           ; CODE XREF: sub_6000C80E+2Câ†‘j
-				                        ; sub_6000C80E+3Câ†‘j
+loc_6000C924:                           ; CODE XREF: SetColorCodeGestalt+2Câ†‘j
+				                        ; SetColorCodeGestalt+3Câ†‘j
 				movem.l var_46(a6),d6-d7/a4
 				unlk    a6
 				rts
-; End of function sub_6000C80E
+; End of function SetColorCodeGestalt
 
 ; ---------------------------------------------------------------------------
-aPowerbook41:   dc.b 'PowerBook4,1',0   ; DATA XREF: sub_6000C80E+E4â†‘o
+aPowerbook41:   dc.b 'PowerBook4,1',0   ; DATA XREF: SetColorCodeGestalt+E4â†‘o
 				dc.b   0
-aPowerbook32:   dc.b 'PowerBook3,2',0   ; DATA XREF: sub_6000C80E+D4â†‘o
+aPowerbook32:   dc.b 'PowerBook3,2',0   ; DATA XREF: SetColorCodeGestalt+D4â†‘o
 				dc.b   0
-aPowerbook31:   dc.b 'PowerBook3,1',0   ; DATA XREF: sub_6000C80E+C4â†‘o
+aPowerbook31:   dc.b 'PowerBook3,1',0   ; DATA XREF: SetColorCodeGestalt+C4â†‘o
 				dc.b   0
-aColorCode:     dc.b 'color-code',0     ; DATA XREF: sub_6000C80E+A2â†‘o
+aColorCode:     dc.b 'color-code',0     ; DATA XREF: SetColorCodeGestalt+A2â†‘o
 				dc.b   0
-aPowermac12:    dc.b 'PowerMac1,2',0    ; DATA XREF: sub_6000C80E+7Câ†‘o
-aModel:         dc.b 'model',0          ; DATA XREF: sub_6000C80E+66â†‘o
+aPowermac12:    dc.b 'PowerMac1,2',0    ; DATA XREF: SetColorCodeGestalt+7Câ†‘o
+aModel:         dc.b 'model',0          ; DATA XREF: SetColorCodeGestalt+66â†‘o
 aDevicesDeviceT:dc.b 'Devices:device-tree',0
-				                        ; DATA XREF: sub_6000C80E+44â†‘o
+				                        ; DATA XREF: SetColorCodeGestalt+44â†‘o
 
 ; =============== S U B R O U T I N E =======================================
 
 ; Attributes: bp-based frame
 
-sub_6000C98A:                           ; CODE XREF: sub_6000C80E+BCâ†‘p
+sub_6000C98A:                           ; CODE XREF: SetColorCodeGestalt+BCâ†‘p
 
 arg_0           set  8
 arg_2           set  $A
@@ -30149,7 +29569,7 @@ loc_6000CEAA:                           ; CODE XREF: sub_6000CDA2+1Eâ†‘j
 
 ; Attributes: bp-based frame
 
-sub_6000CEB6:                           ; CODE XREF: sub_600055A8+88â†‘p
+sub_6000CEB6:                           ; CODE XREF: ResetDMNotifyProc+88â†‘p
 				link    a6,#0
 ; ---------------------------------------------------------------------------
 				dc.b $20
@@ -31394,7 +30814,7 @@ sub_6000D774:                           ; CODE XREF: sub_6000A096â†‘j
 ; =============== S U B R O U T I N E =======================================
 
 
-sub_6000D786:                           ; CODE XREF: sub_6000943A+4Câ†‘p
+sub_6000D786:                           ; CODE XREF: DisableEDiskIfNotEnoughRAM+4Câ†‘p
 				move.l  d0,-(sp)
 				mulu.w  d1,d0
 				movea.l d0,a0
